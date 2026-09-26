@@ -96,32 +96,28 @@ export default function DriverSetupScreen() {
       // 1. Subir Foto Perfil
       if (fotoPerfil) {
         setUploadStatus('Subiendo foto de perfil...');
-        const { publicUrl, error } = await uploadDriverAttachment(session.id, 'photo', fotoPerfil);
-        if (error) throw new Error('Error subiendo foto de perfil: ' + error.message);
+        const { publicUrl } = await uploadDriverAttachment(session.id, 'photo', fotoPerfil);
         if (publicUrl) uploadedFotoUrl = publicUrl;
       }
 
       // 2. Subir Foto Vehículo
       if (fotoVehiculo) {
         setUploadStatus('Subiendo foto del vehículo...');
-        const { publicUrl, error } = await uploadDriverAttachment(session.id, 'vehicle', fotoVehiculo);
-        if (error) throw new Error('Error subiendo foto del vehículo: ' + error.message);
+        const { publicUrl } = await uploadDriverAttachment(session.id, 'vehicle', fotoVehiculo);
         if (publicUrl) uploadedFotoVehiculoUrl = publicUrl;
       }
 
       // 3. Subir Licencia
       if (docLicencia) {
         setUploadStatus('Subiendo foto de licencia...');
-        const { publicUrl, error } = await uploadDriverAttachment(session.id, 'license', docLicencia);
-        if (error) throw new Error('Error subiendo licencia: ' + error.message);
+        const { publicUrl } = await uploadDriverAttachment(session.id, 'license', docLicencia);
         if (publicUrl) uploadedLicenseUrl = publicUrl;
       }
 
       // 4. Subir SOAT
       if (docSoat) {
         setUploadStatus('Subiendo foto de SOAT...');
-        const { publicUrl, error } = await uploadDriverAttachment(session.id, 'soat', docSoat);
-        if (error) throw new Error('Error subiendo SOAT: ' + error.message);
+        const { publicUrl } = await uploadDriverAttachment(session.id, 'soat', docSoat);
         if (publicUrl) uploadedSoatUrl = publicUrl;
       }
 

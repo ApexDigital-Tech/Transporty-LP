@@ -137,6 +137,9 @@ export const uploadDriverAttachment = async (
   fileUri: string
 ): Promise<{ publicUrl: string | null; error: Error | null }> => {
   try {
+    if (fileUri.startsWith('http://') || fileUri.startsWith('https://')) {
+      return { publicUrl: fileUri, error: null };
+    }
     const response = await fetch(fileUri);
     const blob = await response.blob();
     
