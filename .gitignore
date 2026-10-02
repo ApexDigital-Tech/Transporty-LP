@@ -42,3 +42,9 @@ example
 # generated native folders
 /ios
 /android
+
+# temp build logs
+build_log*
+*.gz
+*.txt
+scripts/fetch_eas_logs.js

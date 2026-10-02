@@ -64,14 +64,22 @@ Hemos consolidado un MVP robusto de telemetría y administración utilizando **E
   - Inyectadas las variables de entorno de Supabase en los perfiles `preview` y `production` de `eas.json` para empaquetado nativo offline.
   - Proyecto EAS vinculado exitosamente a la cuenta `@moicogut` con Project ID `a478879e-82f2-4bb8-9f42-5cc80dff4325`.
   - Keystore de producción generado y administrado en la nube de Expo.
-  - **Fix EAS Gradle Build (Dependency Alignment):** Tras investigar el fallo `EAS_BUILD_UNKNOWN_GRADLE_ERROR`, se identificó que `react-native-worklets@0.8.3` requería una versión muy reciente de Android Gradle Plugin (AGP 8.13.1), incompatible con la imagen base de Expo SDK 54. Se ejecutó `npx expo install --fix` para sincronizar las versiones a las recomendadas por Expo (downgrade a `react-native-worklets@0.5.1`), resolviendo la incompatibilidad de compilación de Gradle.
+  - **Fix EAS Gradle Build & Metro Resolution (Hermes & Node 'ws' Fix):** 
+    - Se solucionó la incompatibilidad de Gradle alineando `react-native-worklets@0.5.1`.
+    - Se resolvió la falla de Hermes (`Invalid expression encountered`) fijando `"@supabase/supabase-js": "2.43.4"`.
+    - Se resolvió la falla de resolución de `ws`/`zlib` interceptando las importaciones de `ws` en [`metro.config.js`](file:///c:/Users/Rolando/Desktop/LaPazTransit_Expo/metro.config.js) para retornar un módulo vacío en compilaciones nativas de React Native (aprovechando el `WebSocket` nativo).
+    - Se desactivó la opción experimental `reactCompiler` en [`app.json`](file:///c:/Users/Rolando/Desktop/LaPazTransit_Expo/app.json) y se limitó `maxWorkers: 2` en Metro para prevenir errores Out-Of-Memory (OOM) durante la empaquetación de producción.
+    - Se verificó exitosamente la compilación completa de la empaquetación JS local con `npx expo export:embed` (1196 módulos empaquetados correctamente con 0 errores).
+  - **Optimización de Teclado Móvil y Fallback OTP (Sesión Post-Release):**
+    - Ajustado `KeyboardAvoidingView` en `login.tsx` para no aplicar `behavior="height"` en Android (delegándolo al `adjustResize` del SO) y eliminado el `justify-center` del `ScrollView` para evitar que el teclado oculte los inputs.
+    - Implementado soporte de autocompletado y fallback de desarrollo en `useAuth.tsx` para permitir autenticación fluida con el código de prueba `123456` sin requerir gateway activo de SMS, con verificación estricta de TypeScript (`npx tsc --noEmit`: 0 errores).
 ---
 
 ## 3. Estado de Certificación & Despliegue en Vivo
 1. **Certificación PMV 1.0.0:** Suite de validación de 3 fases completada con éxito (Backend/RLS, UI E2E Interactiva, Reportes PDF).
 2. **Aplicación Web / PWA en Producción:** Operativa en **`https://transporty-lp.vercel.app`**.
 3. **Repositorio Central:** Sincronizado en **`https://github.com/ApexDigital-Tech/Transporty-LP`**.
-4. **Build Móvil APK:** Nuevo build lanzado exitosamente tras la corrección de dependencias y compatibilidad de pnpm.
+4. **Build Móvil APK:** Compilación nativa completada y generada exitosamente en la nube de Expo. APK disponible para descarga e instalación en dispositivos Android en: `https://expo.dev/accounts/moicogut/projects/LaPazTransit_Expo/builds/de225860-9331-43e3-b2bc-c33a65b36cbf`.
 
 ---
 
