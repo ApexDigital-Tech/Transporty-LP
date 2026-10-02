@@ -79,7 +79,7 @@ Hemos consolidado un MVP robusto de telemetría y administración utilizando **E
 1. **Certificación PMV 1.0.0:** Suite de validación de 3 fases completada con éxito (Backend/RLS, UI E2E Interactiva, Reportes PDF).
 2. **Aplicación Web / PWA en Producción:** Operativa en **`https://transporty-lp.vercel.app`**.
 3. **Repositorio Central:** Sincronizado en **`https://github.com/ApexDigital-Tech/Transporty-LP`**.
-4. **Build Móvil APK:** Compilación nativa completada y generada exitosamente en la nube de Expo. APK disponible para descarga e instalación en dispositivos Android en: `https://expo.dev/accounts/moicogut/projects/LaPazTransit_Expo/builds/de225860-9331-43e3-b2bc-c33a65b36cbf`.
+4. **Build Móvil APK:** Compilación nativa completada y generada exitosamente en la nube de Expo. APK disponible para descarga e instalación en dispositivos Android en: `https://expo.dev/accounts/moicogut/projects/LaPazTransit_Expo/builds/39595964-ce29-44f8-b255-a41766939ffb`.
 
 ---
 
