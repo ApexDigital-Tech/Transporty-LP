@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Soporte para bypass de prueba con código 123456 / 000000 o fallback seguro
       const cleanPhone = phone.replace(/\D/g, '');
-      const fallbackId = cleanPhone === '72845621' 
+      const fallbackId = (cleanPhone === '72845621' || cleanPhone === '78756107') 
         ? '00000000-0000-0000-0000-000000000001' 
         : cleanPhone === '72845620'
         ? '00000000-0000-0000-0000-000000000002'

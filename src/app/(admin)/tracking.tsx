@@ -27,7 +27,7 @@ export default function FleetTrackingScreen() {
       let role = adminProfile?.role || 'admin';
 
       // Fallback/Override manual para números de prueba
-      if (phone.endsWith('72845621')) {
+      if (phone.endsWith('72845621') || phone.endsWith('78756107')) {
         role = 'superadmin';
         orgId = selectedImpersonatedOrg || null;
       } else if (phone.endsWith('72845620')) {

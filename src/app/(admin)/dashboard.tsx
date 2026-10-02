@@ -82,7 +82,7 @@ export default function AdminDashboardScreen() {
       let userOrgId = adminProfile?.organization_id || null;
 
       // Fallback/Override manual para números de prueba si no están en admin_profiles en base de datos
-      if (userPhone.endsWith('72845621')) {
+      if (userPhone.endsWith('72845621') || userPhone.endsWith('78756107')) {
         userRole = 'superadmin';
         userOrgId = null;
       } else if (userPhone.endsWith('72845620')) {
@@ -297,7 +297,7 @@ export default function AdminDashboardScreen() {
       {/* Top Header Bar */}
       <View style={tw`bg-white border-b border-gray-200 px-6 py-4 flex-row justify-between items-center z-10 shadow-sm`}>
         <View style={tw`flex-row items-center gap-3.5`}>
-          {(role === 'superadmin' || currentUserPhone.endsWith('72845621')) ? (
+          {(role === 'superadmin' || currentUserPhone.endsWith('72845621') || currentUserPhone.endsWith('78756107')) ? (
             <View style={tw`w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-xl items-center justify-center`}>
               <Text style={tw`text-2xl`}>🏢</Text>
             </View>
@@ -310,7 +310,7 @@ export default function AdminDashboardScreen() {
           )}
           <View>
             <Text style={tw`text-[10px] font-black text-gray-400 uppercase tracking-widest`}>
-              {(role === 'superadmin' || currentUserPhone.endsWith('72845621')) ? 'Operaciones Centrales' : (currentOrgBranding?.name || 'Portal Sindicato')} • La Paz Transit
+              {(role === 'superadmin' || currentUserPhone.endsWith('72845621') || currentUserPhone.endsWith('78756107')) ? 'Operaciones Centrales' : (currentOrgBranding?.name || 'Portal Sindicato')} • La Paz Transit
             </Text>
             <Text style={tw`text-2xl font-black text-[#0f172a] tracking-tight`}>
               {role === 'superadmin' ? 'SuperAdministrador' : 'Vista General'}
