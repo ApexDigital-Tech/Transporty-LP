@@ -64,14 +64,26 @@ Hemos consolidado un MVP robusto de telemetría y administración utilizando **E
   - Inyectadas las variables de entorno de Supabase en los perfiles `preview` y `production` de `eas.json` para empaquetado nativo offline.
   - Proyecto EAS vinculado exitosamente a la cuenta `@moicogut` con Project ID `a478879e-82f2-4bb8-9f42-5cc80dff4325`.
   - Keystore de producción generado y administrado en la nube de Expo.
-  - **Fix Gradle Build Failure:** Build `2950bc55` y `aa0a2def` fallaron con `EAS_BUILD_UNKNOWN_GRADLE_ERROR` porque `react-native-reanimated@4.1.7` requiere `react-native-worklets` como peer dependency, pero no estaba declarado en `package.json`. La dependencia se añadió (`react-native-worklets@0.8.3`) y el `pnpm-lock.yaml` se regeneró. Los cambios deben ser commiteados a GitHub para que EAS los tome en cuenta.
-
+  - **Fix EAS Gradle Build (Dependency Alignment):** Tras investigar el fallo `EAS_BUILD_UNKNOWN_GRADLE_ERROR`, se identificó que `react-native-worklets@0.8.3` requería una versión muy reciente de Android Gradle Plugin (AGP 8.13.1), incompatible con la imagen base de Expo SDK 54. Se ejecutó `npx expo install --fix` para sincronizar las versiones a las recomendadas por Expo (downgrade a `react-native-worklets@0.5.1`), resolviendo la incompatibilidad de compilación de Gradle.
 ---
 
 ## 3. Estado de Certificación & Despliegue en Vivo
 1. **Certificación PMV 1.0.0:** Suite de validación de 3 fases completada con éxito (Backend/RLS, UI E2E Interactiva, Reportes PDF).
 2. **Aplicación Web / PWA en Producción:** Operativa en **`https://transporty-lp.vercel.app`**.
 3. **Repositorio Central:** Sincronizado en **`https://github.com/ApexDigital-Tech/Transporty-LP`**.
-4. **Build Móvil APK:** En proceso de compilación en EAS Cloud ([Ver logs en vivo](https://expo.dev/accounts/moicogut/projects/LaPazTransit_Expo/builds/2950bc55-ff8b-4302-af27-9025dde8d39c)).
+4. **Build Móvil APK:** Nuevo build lanzado exitosamente tras la corrección de dependencias y compatibilidad de pnpm.
+
+---
+
+## 4. Tareas Pendientes (Siguiente Sesión)
+- **Evaluación de Resultados en Campo (Piloto La Paz):**
+  - Instalar el APK final de Android en dispositivos de choferes reales.
+  - Validar la precisión de telemetría y retención de pantalla (Screen Wake Lock) en recorridos físicos.
+  - Comprobar la asertividad de las alertas de trameaje (100m de tolerancia) y ETA.
+- **Validación de Integridad Financiera:**
+  - Pruebas E2E de la pasarela de simulación de pagos QR (estado pendiente a completado).
+  - Aislamiento multi-tenant validado mediante los reportes PDF consolidados.
+- **Feedback Continuo (Sindicatos):**
+  - Ajustes UX en la experiencia administrativa y recolección de feedback de campo.
 
 
