@@ -57,14 +57,21 @@ Hemos consolidado un MVP robusto de telemetría y administración utilizando **E
   - *Seguridad de Tipos:* Compilación TypeScript `npx tsc --noEmit` completada con 0 errores.
 
 - **Validación de Reportes PDF & Analíticas (Fase 3):** Validada la pantalla de Reportes (`reports.tsx`), carga de KPIs operativos, resumen de cumplimiento semanal por ruta (Líneas 158, 201, 212, 300) y ejecución de los exportadores PDF (`expo-print`) sin errores de ejecución.
-- **Compilación de Producción Web (dist/):** Generado exitosamente el bundle estático de producción con `npx expo export --platform web` (21 rutas estáticas compiladas, bundle JS de 2.22 MB optimizado).
-- **Configuración Móvil EAS (eas.json & app.json):** Configurado el identificador `com.lapaztransit.app` y los perfiles de compilación EAS Build (`preview` para APK de instalación directa y `production` para AAB de Google Play).
+- **Compilación de Producción Web & Despliegue en Vercel:** Desplegado con éxito en Vercel (`https://transporty-lp.vercel.app`) con soporte de rutas estáticas en `vercel.json` y sincronización continua desde GitHub (`ApexDigital-Tech/Transporty-LP`).
+- **Resolución de Permisos de Onboarding & Storage (`fix_driver_setup_rls.sql`):** Habilitada la política pública/autenticada para la inserción en `drivers`, actualización de telemetría en `live_locations` y configuración de permisos de subida en el bucket `driver_profiles`, permitiendo el flujo completo de registro y activación de cabina en dispositivos móviles.
+- **Configuración de Permisos Nativos y EAS Build Android:**
+  - Inyectados en `app.json` los permisos de Android requeridos (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `CAMERA`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`) y el plugin de configuración de `expo-location`.
+  - Inyectadas las variables de entorno de Supabase en los perfiles `preview` y `production` de `eas.json` para empaquetado nativo offline.
+  - Proyecto EAS vinculado exitosamente a la cuenta `@moicogut` con Project ID `a478879e-82f2-4bb8-9f42-5cc80dff4325`.
+  - Keystore de producción generado y administrado en la nube de Expo.
+  - **Fix Gradle Build Failure:** Build `2950bc55` y `aa0a2def` fallaron con `EAS_BUILD_UNKNOWN_GRADLE_ERROR` porque `react-native-reanimated@4.1.7` requiere `react-native-worklets` como peer dependency, pero no estaba declarado en `package.json`. La dependencia se añadió (`react-native-worklets@0.8.3`) y el `pnpm-lock.yaml` se regeneró. Los cambios deben ser commiteados a GitHub para que EAS los tome en cuenta.
 
 ---
 
-## 3. Estado de Certificación & Despliegue
-1. **Certificación PMV:** Suite de validación de 3 fases completada con éxito (Backend/RLS, UI E2E Interactiva, Reportes PDF).
-2. **Build Web Producción:** Directorio [`dist/`](file:///c:/Users/Rolando/Desktop/LaPazTransit_Expo/dist) listo para despliegue en Vercel, Netlify, Cloudflare Pages o hosting estático.
-3. **Build Móvil:** Listo para compilar con `eas build -p android --profile preview` en la nube de Expo.
+## 3. Estado de Certificación & Despliegue en Vivo
+1. **Certificación PMV 1.0.0:** Suite de validación de 3 fases completada con éxito (Backend/RLS, UI E2E Interactiva, Reportes PDF).
+2. **Aplicación Web / PWA en Producción:** Operativa en **`https://transporty-lp.vercel.app`**.
+3. **Repositorio Central:** Sincronizado en **`https://github.com/ApexDigital-Tech/Transporty-LP`**.
+4. **Build Móvil APK:** En proceso de compilación en EAS Cloud ([Ver logs en vivo](https://expo.dev/accounts/moicogut/projects/LaPazTransit_Expo/builds/2950bc55-ff8b-4302-af27-9025dde8d39c)).
 
 
