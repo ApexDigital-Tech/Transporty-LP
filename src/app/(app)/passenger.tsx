@@ -16,8 +16,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { useStore } from '../../hooks/useStore';
 import LiveMapWeb from '../../components/LiveMapWeb';
+import { useTheme } from '../../theme';
 
 export default function PassengerScreen() {
+  const { theme, isDark } = useTheme();
   const { coords } = useLocation();
   const { liveLocations, fetchInitialLocations, subscribeToLocations, unsubscribeFromLocations } = useStore();
   
@@ -181,54 +183,83 @@ export default function PassengerScreen() {
   );
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-gray-50`}>
-      {/* Top Header - Premium Minimalist */}
-      <View style={tw`bg-white px-5 py-4 flex-row items-center justify-between border-b border-gray-100 shadow-sm`}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.bg }]}>
+      {/* Top Header */}
+      <View style={[
+        tw`px-5 py-4 flex-row items-center justify-between`,
+        {
+          backgroundColor: theme.headerBg,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
+        }
+      ]}>
         <View>
-          <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-widest`}>La Paz Transit</Text>
-          <Text style={tw`text-base font-extrabold text-[#00327d] tracking-tight`}>Buscar Ruta / Parada</Text>
+          <Text style={[tw`text-[10px] font-bold uppercase tracking-widest`, { color: theme.textSubtle }]}>
+            Transporty OS
+          </Text>
+          <Text style={[tw`text-base font-extrabold tracking-tight`, { color: theme.text }]}>
+            Radar de Rutas
+          </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={signOut}
-          style={tw`px-4 py-2 rounded-full border border-gray-200 bg-gray-50`}
+          style={[
+            tw`px-4 py-2 rounded-full`,
+            { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+          ]}
         >
-          <Text style={tw`text-gray-600 font-bold text-xs uppercase tracking-wider`}>Salir</Text>
+          <Text style={[tw`font-bold text-xs uppercase tracking-wider`, { color: theme.textMuted }]}>Salir</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content Layout */}
-      <ScrollView style={tw`flex-1 p-4`} contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Helper Instructions Banner */}
-        <View style={tw`bg-blue-50/50 rounded-2xl p-5 border border-blue-100 mb-4`}>
-          <Text style={tw`text-[#00327d] font-bold mb-1.5 text-sm`}>🧭 Monitoreo en Tiempo Real</Text>
-          <Text style={tw`text-blue-900/80 text-xs leading-relaxed`}>
-            Selecciona tu línea a continuación para conectarte automáticamente a la transmisión satelital de los minibuses en tiempo real.
+      <ScrollView
+        style={tw`flex-1`}
+        contentContainerStyle={[tw`p-4`, { paddingBottom: 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Info Banner */}
+        <View style={[
+          tw`rounded-2xl p-4 mb-4`,
+          {
+            backgroundColor: isDark ? '#0D1F33' : '#EFF6FF',
+            borderWidth: 1,
+            borderColor: isDark ? '#1E3A5F' : '#BFDBFE',
+          }
+        ]}>
+          <Text style={[tw`font-bold mb-1 text-sm`, { color: isDark ? '#60A5FA' : '#1D4ED8' }]}>
+            🧭 Monitoreo en Tiempo Real
+          </Text>
+          <Text style={[tw`text-xs leading-relaxed`, { color: isDark ? '#93C5FD' : '#1E40AF' }]}>
+            Selecciona tu línea para conectarte a la transmisión en vivo de los minibuses.
           </Text>
         </View>
 
-        {/* Route Selector with Search Input */}
+        {/* Route Search */}
         <View style={tw`mb-4`}>
-          <Text style={tw`text-gray-500 font-bold text-xs uppercase tracking-wider mb-2.5 ml-1`}>
-            Buscar Línea de Minibús
+          <Text style={[tw`font-bold text-xs uppercase tracking-wider mb-2.5 ml-1`, { color: theme.textSubtle }]}>
+            Buscar Línea de Miníbus
           </Text>
-          <View style={tw`flex-row items-center border border-gray-200 rounded-xl px-3.5 bg-white mb-3 shadow-sm`}>
-            <Text style={tw`text-gray-400 mr-2 text-sm`}>🔍</Text>
+          <View style={[
+            tw`flex-row items-center rounded-xl px-3.5 mb-3`,
+            { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+          ]}>
+            <Text style={[tw`mr-2 text-sm`, { color: theme.textSubtle }]}>🔍</Text>
             <TextInput
-              placeholder="Buscar línea (Ej. 2, 201, Litoral, Avaroa...)"
-              placeholderTextColor="#9ca3af"
-              style={tw`flex-1 py-3 text-sm text-gray-900 font-semibold`}
+              placeholder="Buscar línea (Ej. 2, 201, Avaroa...)"
+              placeholderTextColor={theme.textSubtle}
+              style={[tw`flex-1 py-3 text-sm font-semibold`, { color: theme.text }]}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery !== '' && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Text style={tw`text-gray-400 font-bold text-xs px-2`}>✕</Text>
+                <Text style={[tw`font-bold text-xs px-2`, { color: theme.textMuted }]}>✕</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {loading ? (
-            <ActivityIndicator color="#00327d" size="small" style={tw`my-4`} />
+            <ActivityIndicator color={theme.accent} size="small" style={tw`my-4`} />
           ) : (
             <View style={tw`flex-row flex-wrap mb-2`}>
               {filteredRoutes.slice(0, 15).map((route) => {
@@ -237,94 +268,117 @@ export default function PassengerScreen() {
                   <TouchableOpacity
                     key={route.id}
                     onPress={() => setSelectedRoute(route)}
-                    style={tw`mr-2.5 mb-2.5 px-4.5 py-2.5 rounded-full border ${
-                      isSelected
-                        ? 'bg-[#00327d] border-[#00327d] shadow-sm'
-                        : 'bg-white border-gray-200'
-                    }`}
+                    style={[
+                      tw`mr-2.5 mb-2.5 px-4 py-2.5 rounded-full`,
+                      {
+                        backgroundColor: isSelected ? theme.accent : theme.card,
+                        borderWidth: 1,
+                        borderColor: isSelected ? theme.accent : theme.border,
+                      }
+                    ]}
                   >
-                    <Text
-                      style={tw`font-bold text-xs ${
-                        isSelected ? 'text-white' : 'text-gray-600'
-                      }`}
-                    >
+                    <Text style={[
+                      tw`font-bold text-xs`,
+                      { color: isSelected ? '#fff' : theme.textMuted }
+                    ]}>
                       Línea {route.line_code}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
               {filteredRoutes.length > 15 && (
-                <Text style={tw`text-gray-400 text-[10px] font-semibold self-center mb-2.5 ml-1`}>
-                  y {filteredRoutes.length - 15} líneas más. Filtra para reducir la lista.
+                <Text style={[tw`text-[10px] font-semibold self-center mb-2.5 ml-1`, { color: theme.textSubtle }]}>
+                  y {filteredRoutes.length - 15} líneas más...
                 </Text>
               )}
               {filteredRoutes.length === 0 && (
-                <Text style={tw`text-gray-400 text-xs italic ml-1`}>
-                  No se encontraron rutas con ese nombre.
+                <Text style={[tw`text-xs italic ml-1`, { color: theme.textMuted }]}>
+                  No se encontraron rutas.
                 </Text>
               )}
             </View>
           )}
         </View>
 
-        {/* Selected Route Info Panel */}
+        {/* Selected Route Info */}
         {selectedRoute && (
-          <View style={tw`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-4`}>
+          <View style={[
+            tw`rounded-2xl p-5 mb-4`,
+            { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+          ]}>
             <View style={tw`flex-row items-center justify-between`}>
               <View style={tw`flex-1 pr-3`}>
-                <Text style={tw`text-[10px] font-bold uppercase text-blue-600 tracking-wider`}>
+                <Text style={[tw`text-[10px] font-bold uppercase tracking-wider`, { color: theme.accent }]}>
                   Ruta Seleccionada
                 </Text>
-                <Text style={tw`text-gray-800 font-black text-lg mt-1`} numberOfLines={1}>
-                  Línea {selectedRoute.line_code} - {selectedRoute.name}
+                <Text style={[tw`font-black text-lg mt-1`, { color: theme.text }]} numberOfLines={1}>
+                  Línea {selectedRoute.line_code} — {selectedRoute.name}
                 </Text>
               </View>
-              <View style={tw`w-10 h-10 rounded-xl bg-blue-50 items-center justify-center border border-blue-100`}>
+              <View style={[
+                tw`w-10 h-10 rounded-xl items-center justify-center`,
+                { backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + '30' }
+              ]}>
                 <Text style={tw`text-lg`}>🚌</Text>
               </View>
             </View>
-            <View style={tw`flex-row items-center justify-between mt-4 pt-3.5 border-t border-gray-50`}>
+            <View style={[
+              tw`flex-row items-center justify-between mt-4 pt-3.5`,
+              { borderTopWidth: 1, borderTopColor: theme.border }
+            ]}>
               <View style={tw`flex-1`}>
-                <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Origen</Text>
-                <Text style={tw`text-gray-700 text-xs font-semibold mt-0.5`} numberOfLines={1}>{selectedRoute.start_point}</Text>
+                <Text style={[tw`text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Origen</Text>
+                <Text style={[tw`text-xs font-semibold mt-0.5`, { color: theme.text }]} numberOfLines={1}>
+                  {selectedRoute.start_point}
+                </Text>
               </View>
-              <View style={tw`w-8 items-center`}>
-                <Text style={tw`text-gray-300`}>➔</Text>
-              </View>
+              <Text style={[tw`w-8 text-center`, { color: theme.border }]}>➔</Text>
               <View style={tw`flex-1 items-end`}>
-                <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Destino</Text>
-                <Text style={tw`text-gray-700 text-xs font-semibold mt-0.5`} numberOfLines={1}>{selectedRoute.end_point}</Text>
+                <Text style={[tw`text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Destino</Text>
+                <Text style={[tw`text-xs font-semibold mt-0.5`, { color: theme.text }]} numberOfLines={1}>
+                  {selectedRoute.end_point}
+                </Text>
               </View>
             </View>
           </View>
         )}
 
-        {/* Live Interactive Map */}
+        {/* Live Map */}
         {selectedRoute && (
-          <View style={tw`w-full h-80 bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 overflow-hidden`}>
-            <LiveMapWeb 
+          <View style={[
+            tw`w-full h-80 rounded-2xl mb-4 overflow-hidden`,
+            { borderWidth: 1, borderColor: theme.border }
+          ]}>
+            <LiveMapWeb
               markers={liveLocations.map((loc: any) => ({
                 id: loc.driver_id,
                 lat: loc.latitude,
                 lng: loc.longitude,
-                title: loc.is_off_route ? '⚠️ TRAMEAJE DETECTADO' : 'Minibús Activo',
+                title: loc.is_off_route ? '⚠️ TRAMEAJE' : 'Miníbus Activo',
                 isDriver: false,
                 isOffRoute: loc.is_off_route
-              }))} 
+              }))}
             />
           </View>
         )}
 
-        {/* Subscribed Active Vehicles List */}
-        <Text style={tw`text-gray-500 font-bold text-xs uppercase tracking-wider mb-2.5 ml-1`}>
-          Minibuses en Ruta ({liveLocations.length})
+        {/* Vehicles List */}
+        <Text style={[tw`font-bold text-xs uppercase tracking-wider mb-2.5 ml-1`, { color: theme.textSubtle }]}>
+          Miníbuses en Ruta ({liveLocations.length})
         </Text>
 
         {liveLocations.length === 0 ? (
-          <View style={tw`bg-orange-50 border border-orange-200 rounded-2xl p-6 items-center justify-center`}>
-            <Text style={tw`text-orange-950 font-bold text-center`}>No hay unidades transmitiendo</Text>
-            <Text style={tw`text-orange-900 text-xs text-center mt-2 leading-relaxed px-4`}>
-              Actualmente no hay choferes en turno enviando GPS en esta ruta. Inicia sesión en el panel del Chofer para simular y ver actualizaciones en tiempo real instantáneas.
+          <View style={[
+            tw`rounded-2xl p-6 items-center justify-center`,
+            {
+              backgroundColor: isDark ? '#1A0D00' : '#FFF7ED',
+              borderWidth: 1,
+              borderColor: isDark ? '#7C2D1240' : '#FED7AA',
+            }
+          ]}>
+            <Text style={[tw`font-bold text-center`, { color: theme.accent }]}>No hay unidades transmitiendo</Text>
+            <Text style={[tw`text-xs text-center mt-2 leading-relaxed px-4`, { color: theme.textMuted }]}>
+              Actualmente no hay choferes en turno en esta ruta. Inicia sesión como Chofer para simular.
             </Text>
           </View>
         ) : (
@@ -334,52 +388,80 @@ export default function PassengerScreen() {
               const passengerLng = coords?.longitude ?? -68.1500;
               const distMeters = getDistance(item.latitude, item.longitude, passengerLat, passengerLng);
               const distKm = distMeters / 1000;
-              const speedMPS = 5.5; // ~20 km/h en tránsito paceño
+              const speedMPS = 5.5;
               const etaMinutes = Math.max(1, Math.round(distMeters / speedMPS / 60));
               const isOffRoute = item.is_off_route || false;
-              
+
               return (
-                <View 
-                  key={item.driver_id} 
-                  style={tw`bg-white rounded-2xl p-4 shadow-sm border ${isOffRoute ? 'border-red-200 bg-red-50/10' : 'border-gray-100'} flex-row items-center justify-between mb-3`}
+                <View
+                  key={item.driver_id}
+                  style={[
+                    tw`rounded-2xl p-4 flex-row items-center justify-between mb-3`,
+                    {
+                      backgroundColor: isOffRoute
+                        ? (isDark ? '#2A0F0F' : '#FEF2F2')
+                        : theme.card,
+                      borderWidth: 1,
+                      borderColor: isOffRoute
+                        ? (isDark ? '#F8717140' : '#FECACA')
+                        : theme.border,
+                    }
+                  ]}
                 >
                   <View style={tw`flex-row items-center gap-3.5 flex-1 pr-2`}>
-                    <View style={tw`${isOffRoute ? 'bg-red-100 border-red-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-xl border`}>
+                    <View style={[
+                      tw`p-2.5 rounded-xl`,
+                      {
+                        backgroundColor: isOffRoute
+                          ? (isDark ? '#7F1D1D30' : '#FEE2E2')
+                          : theme.accentSoft,
+                        borderWidth: 1,
+                        borderColor: isOffRoute
+                          ? (isDark ? '#F8717140' : '#FECACA')
+                          : theme.accent + '30',
+                      }
+                    ]}>
                       <Text style={tw`text-sm`}>{isOffRoute ? '⚠️' : '📡'}</Text>
                     </View>
                     <View style={tw`flex-1`}>
                       <View style={tw`flex-row items-center gap-2`}>
-                        <Text style={tw`text-gray-800 font-black text-sm`}>
-                          Minibús Activo
+                        <Text style={[tw`font-black text-sm`, { color: theme.text }]}>
+                          Miníbus Activo
                         </Text>
                         {isOffRoute && (
-                          <View style={tw`bg-red-500 px-2 py-0.5 rounded-full`}>
+                          <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: theme.statusDanger }]}>
                             <Text style={tw`text-[8px] font-black text-white uppercase`}>TRAMEAJE</Text>
                           </View>
                         )}
                       </View>
-                      <Text style={tw`text-gray-400 text-[10px] font-semibold mt-0.5`} numberOfLines={1}>
-                        Placa: {item.placa || 'En tránsito'} {isOffRoute ? `• Desvío: +${item.distance_from_path?.toFixed(0)}m` : ''}
+                      <Text style={[tw`text-[10px] font-semibold mt-0.5`, { color: theme.textMuted }]} numberOfLines={1}>
+                        Placa: {item.placa || 'En tránsito'}
+                        {isOffRoute ? ` • Desvío: +${item.distance_from_path?.toFixed(0)}m` : ''}
                       </Text>
-                      
-                      {/* QR Payment Trigger Button */}
+                      {/* QR Payment Button */}
                       <TouchableOpacity
                         onPress={() => startPaymentFlow(item.driver_id, item.placa || 'En tránsito')}
-                        style={tw`bg-[#006e0a] px-3.5 py-2 rounded-xl mt-2.5 self-start flex-row items-center gap-1.5`}
+                        style={[
+                          tw`px-3.5 py-2 rounded-xl mt-2.5 self-start flex-row items-center gap-1.5`,
+                          { backgroundColor: theme.statusActive + '20', borderWidth: 1, borderColor: theme.statusActive + '40' }
+                        ]}
                       >
-                        <Text style={tw`text-[10px] text-white font-extrabold uppercase tracking-widest`}>💳 Pagar QR</Text>
+                        <Text style={[tw`text-[10px] font-extrabold uppercase tracking-widest`, { color: theme.statusActive }]}>
+                          💳 Pagar QR
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
-                  <View style={tw`items-end justify-between h-full`}>
-                    <View style={tw`items-end`}>
-                      <Text style={tw`${isOffRoute ? 'text-red-600' : 'text-[#006e0a]'} font-extrabold text-sm`}>
-                        ~{etaMinutes} min
-                      </Text>
-                      <Text style={tw`text-[10px] text-gray-400 font-medium mt-0.5`}>
-                        {distKm.toFixed(1)} km
-                      </Text>
-                    </View>
+                  <View style={tw`items-end`}>
+                    <Text style={[
+                      tw`font-extrabold text-sm`,
+                      { color: isOffRoute ? theme.statusDanger : theme.statusActive }
+                    ]}>
+                      ~{etaMinutes} min
+                    </Text>
+                    <Text style={[tw`text-[10px] font-medium mt-0.5`, { color: theme.textSubtle }]}>
+                      {distKm.toFixed(1)} km
+                    </Text>
                   </View>
                 </View>
               );
@@ -388,7 +470,7 @@ export default function PassengerScreen() {
         )}
       </ScrollView>
 
-      {/* QR Payment Modal (Drawer) */}
+      {/* QR Payment Modal */}
       <Modal
         visible={isPayModalVisible}
         animationType="slide"
@@ -396,27 +478,38 @@ export default function PassengerScreen() {
         onRequestClose={() => setIsPayModalVisible(false)}
       >
         <View style={tw`flex-1 bg-black/60 justify-end`}>
-          <View style={tw`bg-white rounded-t-3xl p-6 min-h-[500px]`}>
-            {/* Header */}
-            <View style={tw`flex-row justify-between items-center pb-4 border-b border-gray-100`}>
+          <View style={[
+            tw`rounded-t-3xl p-6 min-h-[500px]`,
+            { backgroundColor: theme.card }
+          ]}>
+            {/* Modal Header */}
+            <View style={[
+              tw`flex-row justify-between items-center pb-4`,
+              { borderBottomWidth: 1, borderBottomColor: theme.border }
+            ]}>
               <View>
-                <Text style={tw`text-xs font-bold text-gray-400 uppercase tracking-widest`}>Pago de Pasaje</Text>
-                <Text style={tw`text-lg font-black text-[#0f172a]`}>Código QR Simpli</Text>
+                <Text style={[tw`text-xs font-bold uppercase tracking-widest`, { color: theme.textSubtle }]}>Pago de Pasaje</Text>
+                <Text style={[tw`text-lg font-black`, { color: theme.text }]}>Código QR</Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setIsPayModalVisible(false)}
-                style={tw`w-8 h-8 rounded-full bg-slate-100 items-center justify-center`}
+                style={[
+                  tw`w-8 h-8 rounded-full items-center justify-center`,
+                  { backgroundColor: theme.cardElevated }
+                ]}
               >
-                <Text style={tw`text-gray-500 font-bold`}>✕</Text>
+                <Text style={[tw`font-bold`, { color: theme.textMuted }]}>✕</Text>
               </TouchableOpacity>
             </View>
 
             {paymentStatus === 'idle' && (
-              <View style={tw`py-5 flex-1`}>
-                <Text style={tw`text-xs text-gray-400 font-bold mb-2`}>Unidad a pagar: Placa {payDriverPlaca}</Text>
-                
-                {/* Monto selector */}
-                <Text style={tw`text-slate-700 text-xs font-extrabold uppercase mb-2 mt-4`}>Monto a Cobrar (BOB)</Text>
+              <View style={[tw`py-5 flex-1`]}>
+                <Text style={[tw`text-xs font-bold mb-2`, { color: theme.textMuted }]}>
+                  Unidad a pagar: Placa {payDriverPlaca}
+                </Text>
+
+                {/* Amount Selector */}
+                <Text style={[tw`text-xs font-extrabold uppercase mb-2 mt-4`, { color: theme.text }]}>Monto (BOB)</Text>
                 <View style={tw`flex-row gap-3 mb-4`}>
                   {[2.00, 2.50, 3.00].map((val) => {
                     const isSelected = payAmount === val;
@@ -424,11 +517,16 @@ export default function PassengerScreen() {
                       <TouchableOpacity
                         key={val}
                         onPress={() => setPayAmount(val)}
-                        style={tw`flex-1 py-3 rounded-2xl border items-center ${
-                          isSelected ? 'bg-[#00327d] border-[#00327d]' : 'bg-white border-slate-200'
-                        }`}
+                        style={[
+                          tw`flex-1 py-3 rounded-2xl items-center`,
+                          {
+                            backgroundColor: isSelected ? theme.accent : theme.cardElevated,
+                            borderWidth: 1,
+                            borderColor: isSelected ? theme.accent : theme.border,
+                          }
+                        ]}
                       >
-                        <Text style={tw`font-extrabold text-sm ${isSelected ? 'text-white' : 'text-slate-600'}`}>
+                        <Text style={[tw`font-extrabold text-sm`, { color: isSelected ? '#fff' : theme.textMuted }]}>
                           Bs. {val.toFixed(2)}
                         </Text>
                       </TouchableOpacity>
@@ -436,47 +534,71 @@ export default function PassengerScreen() {
                   })}
                 </View>
 
-                {/* Input celular pasajero */}
-                <Text style={tw`text-slate-700 text-xs font-extrabold uppercase mb-2`}>Tu Número de Celular</Text>
+                {/* Phone Input */}
+                <Text style={[tw`text-xs font-extrabold uppercase mb-2`, { color: theme.text }]}>Tu Número de Celular</Text>
                 <TextInput
                   placeholder="Ej. 72845625"
                   keyboardType="phone-pad"
                   maxLength={8}
-                  style={tw`border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold bg-slate-50 text-slate-900 mb-6`}
+                  style={[
+                    tw`rounded-2xl px-4 py-3 text-sm font-semibold mb-6`,
+                    {
+                      backgroundColor: theme.inputBg,
+                      borderWidth: 1,
+                      borderColor: theme.inputBorder,
+                      color: theme.text,
+                    }
+                  ]}
+                  placeholderTextColor={theme.textSubtle}
                   value={payPassengerPhone}
                   onChangeText={setPayPassengerPhone}
                 />
 
                 <TouchableOpacity
                   onPress={handleGenerateQR}
-                  style={tw`w-full bg-[#00327d] py-4 rounded-full items-center shadow-md`}
+                  style={[
+                    tw`w-full py-4 rounded-2xl items-center`,
+                    {
+                      backgroundColor: theme.accent,
+                      shadowColor: theme.accent,
+                      shadowOpacity: 0.35,
+                      shadowRadius: 12,
+                      elevation: 5,
+                    }
+                  ]}
                 >
-                  <Text style={tw`text-white font-extrabold text-sm uppercase tracking-widest`}>Generar QR Simpli</Text>
+                  <Text style={tw`text-white font-extrabold text-sm uppercase tracking-widest`}>Generar QR</Text>
                 </TouchableOpacity>
               </View>
             )}
 
             {paymentStatus === 'pending' && (
               <View style={tw`py-6 items-center flex-1 justify-center`}>
-                <Text style={tw`text-sm font-bold text-gray-500 mb-1.5`}>Escanea con tu App Bancaria</Text>
-                <Text style={tw`text-xl font-black text-slate-800 mb-6`}>Bs. {payAmount.toFixed(2)}</Text>
-                
-                {/* Beautiful Mock QR Code Visual */}
-                <View style={tw`w-52 h-52 bg-slate-50 border border-slate-200 rounded-2xl p-4 items-center justify-center mb-6`}>
-                  {/* Faux QR grid details */}
+                <Text style={[tw`text-sm font-bold mb-1.5`, { color: theme.textMuted }]}>Escanea con tu App Bancaria</Text>
+                <Text style={[tw`text-xl font-black mb-6`, { color: theme.text }]}>Bs. {payAmount.toFixed(2)}</Text>
+
+                {/* Mock QR */}
+                <View style={[
+                  tw`w-52 h-52 rounded-2xl p-4 items-center justify-center mb-6`,
+                  { backgroundColor: theme.cardElevated, borderWidth: 1, borderColor: theme.border }
+                ]}>
                   <View style={tw`w-full h-full flex-col justify-between`}>
                     {[1, 2, 3, 4, 5, 6].map((rowIdx) => (
                       <View key={rowIdx} style={tw`flex-row justify-between h-5`}>
                         {[1, 2, 3, 4, 5, 6].map((colIdx) => {
-                          // Draw a nice structured QR visual with solid boxes at corners
                           const isCorner = (rowIdx <= 2 && colIdx <= 2) || (rowIdx <= 2 && colIdx >= 5) || (rowIdx >= 5 && colIdx <= 2);
                           const isRandomDark = (rowIdx + colIdx) % 3 === 0;
                           return (
-                            <View 
-                              key={colIdx} 
-                              style={tw`w-5 h-5 rounded ${
-                                isCorner || isRandomDark ? 'bg-slate-800' : 'bg-transparent'
-                              } border border-slate-100/50`}
+                            <View
+                              key={colIdx}
+                              style={[
+                                tw`w-5 h-5 rounded`,
+                                {
+                                  backgroundColor: (isCorner || isRandomDark)
+                                    ? (isDark ? '#fff' : '#1E293B')
+                                    : 'transparent'
+                                }
+                              ]}
                             />
                           );
                         })}
@@ -485,21 +607,27 @@ export default function PassengerScreen() {
                   </View>
                 </View>
 
-                <ActivityIndicator color="#00327d" size="large" style={tw`mb-2`} />
-                <Text style={tw`text-gray-400 text-xs font-semibold mb-6 animate-pulse`}>
+                <ActivityIndicator color={theme.accent} size="large" style={tw`mb-2`} />
+                <Text style={[tw`text-xs font-semibold mb-6`, { color: theme.textMuted }]}>
                   Esperando confirmación del banco...
                 </Text>
 
-                {/* Simulator Action Button */}
                 <TouchableOpacity
                   onPress={simulateSuccessfulPayment}
                   disabled={isSimulatingPayment}
-                  style={tw`w-full bg-[#006e0a] py-3.5 rounded-full items-center shadow-sm`}
+                  style={[
+                    tw`w-full py-3.5 rounded-2xl items-center`,
+                    {
+                      backgroundColor: isDark ? '#0F2A0F' : '#F0FDF4',
+                      borderWidth: 1,
+                      borderColor: isDark ? '#22C55E40' : '#86EFAC',
+                    }
+                  ]}
                 >
                   {isSimulatingPayment ? (
-                    <ActivityIndicator color="white" />
+                    <ActivityIndicator color={theme.statusActive} />
                   ) : (
-                    <Text style={tw`text-white font-extrabold text-xs uppercase tracking-widest`}>
+                    <Text style={[tw`font-extrabold text-xs uppercase tracking-widest`, { color: theme.statusActive }]}>
                       ⚡ Simular Pago (Banco Unión)
                     </Text>
                   )}
@@ -509,16 +637,28 @@ export default function PassengerScreen() {
 
             {paymentStatus === 'completed' && (
               <View style={tw`py-10 items-center flex-1 justify-center`}>
-                <View style={tw`w-20 h-20 rounded-full bg-green-50 items-center justify-center border-2 border-green-200 mb-6`}>
-                  <Text style={tw`text-3xl text-green-600 font-bold`}>✓</Text>
+                <View style={[
+                  tw`w-20 h-20 rounded-full items-center justify-center mb-6`,
+                  {
+                    backgroundColor: isDark ? '#0F2A0F' : '#F0FDF4',
+                    borderWidth: 2,
+                    borderColor: theme.statusActive + '60',
+                  }
+                ]}>
+                  <Text style={[tw`text-3xl font-bold`, { color: theme.statusActive }]}>✓</Text>
                 </View>
-                <Text style={tw`text-2xl font-black text-slate-800`}>¡Pago Exitoso!</Text>
-                <Text style={tw`text-gray-400 text-xs font-bold mt-2 text-center leading-relaxed px-6`}>
-                  Tu pasaje de Bs. {payAmount.toFixed(2)} ha sido transferido directamente a la unidad de la Placa {payDriverPlaca}.
+                <Text style={[tw`text-2xl font-black`, { color: theme.text }]}>¡Pago Exitoso!</Text>
+                <Text style={[tw`text-xs font-bold mt-2 text-center leading-relaxed px-6`, { color: theme.textMuted }]}>
+                  Tu pasaje de Bs. {payAmount.toFixed(2)} ha sido transferido a la Placa {payDriverPlaca}.
                 </Text>
-                <Text style={tw`text-[10px] text-green-600 font-black uppercase mt-6 tracking-widest bg-green-50 px-3 py-1 rounded-full`}>
-                  Transacción Simpli Confirmada
-                </Text>
+                <View style={[
+                  tw`px-3 py-1 rounded-full mt-6`,
+                  { backgroundColor: theme.statusActive + '18', borderWidth: 1, borderColor: theme.statusActive + '40' }
+                ]}>
+                  <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: theme.statusActive }]}>
+                    Transacción Confirmada
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -528,18 +668,16 @@ export default function PassengerScreen() {
   );
 }
 
-// Haversine function
+// Haversine distance function
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371e3; // Earth radius in meters
+  const R = 6371e3;
   const phi1 = (lat1 * Math.PI) / 180;
   const phi2 = (lat2 * Math.PI) / 180;
   const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
   const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
-
   const a =
     Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
     Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // Returns meters
+  return R * c;
 }

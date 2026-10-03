@@ -8,6 +8,7 @@ import { useAuth, UserRole } from '@/hooks/useAuth';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 
 // ────────────────────────────────────────────────────────────────
 //  Role Selector Card
@@ -213,21 +214,13 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Send OTP Button */}
-                <TouchableOpacity
+                <PrimaryButton
+                  label="Enviar Código"
+                  loadingLabel="Enviando..."
                   onPress={handleSendOtp}
-                  disabled={isLoading || phone.length < 8}
-                  style={[
-                    tw`py-4 rounded-2xl items-center`,
-                    {
-                      backgroundColor: phone.length >= 8 ? theme.accent : (isDark ? theme.cardElevated : '#E2E8F0'),
-                      opacity: isLoading ? 0.7 : 1,
-                    }
-                  ]}
-                >
-                  <Text style={tw`text-white font-bold text-sm uppercase tracking-wider`}>
-                    {isLoading ? 'Enviando...' : 'Enviar Código'}
-                  </Text>
-                </TouchableOpacity>
+                  disabled={phone.length < 8}
+                  isLoading={isLoading}
+                />
               </>
             ) : (
               <>
@@ -286,21 +279,14 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Verify Button */}
-                <TouchableOpacity
+                <PrimaryButton
+                  label="Verificar Código"
+                  loadingLabel="Verificando..."
                   onPress={handleVerifyOtp}
-                  disabled={isLoading || otpToken.length < 6}
-                  style={[
-                    tw`py-4 rounded-2xl items-center mb-4`,
-                    {
-                      backgroundColor: otpToken.length >= 6 ? theme.accent : (isDark ? theme.cardElevated : '#E2E8F0'),
-                      opacity: isLoading ? 0.7 : 1,
-                    }
-                  ]}
-                >
-                  <Text style={tw`text-white font-bold text-sm uppercase tracking-wider`}>
-                    {isLoading ? 'Verificando...' : 'Verificar Código'}
-                  </Text>
-                </TouchableOpacity>
+                  disabled={otpToken.length < 6}
+                  isLoading={isLoading}
+                  style={tw`mb-4`}
+                />
 
                 {/* Back Link */}
                 <TouchableOpacity

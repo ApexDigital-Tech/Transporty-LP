@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { supabase, uploadDriverAttachment } from '../../services/supabase';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 
 interface Organization {
   id: string;
@@ -315,16 +316,14 @@ export default function DriverSetupScreen() {
           </View>
         </View>
 
-        <TouchableOpacity 
+        <PrimaryButton
           onPress={handleSave}
           disabled={isLoading || fetchingOrgs}
-          style={tw`bg-[#00327d] py-4 rounded-full items-center shadow-md shadow-blue-100 mt-2 flex-row justify-center`}
-        >
-          {isLoading && <ActivityIndicator color="white" style={tw`mr-2`} size="small" />}
-          <Text style={tw`text-white font-extrabold text-sm uppercase tracking-widest`}>
-            {isLoading ? (uploadStatus || 'Guardando...') : 'Completar Registro'}
-          </Text>
-        </TouchableOpacity>
+          isLoading={isLoading}
+          label="Completar Registro"
+          loadingLabel={uploadStatus || 'Guardando...'}
+          style={tw`mt-2`}
+        />
         
         <TouchableOpacity 
           onPress={() => {

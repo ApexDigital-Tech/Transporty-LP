@@ -16,6 +16,7 @@ import { supabase, Route } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import LiveMapWeb from '../../components/LiveMapWeb';
 import { useStore } from '../../hooks/useStore';
+import { useTheme } from '../../theme';
 
 interface DriverInfo {
   id: string;
@@ -34,6 +35,7 @@ interface DriverInfo {
 }
 
 export default function DriverScreen() {
+  const { theme, isDark } = useTheme();
   const router = useRouter();
   const { coords, errorMsg, startTracking, stopTracking } = useLocation();
   const wakeLockRef = React.useRef<any>(null);
@@ -251,130 +253,195 @@ export default function DriverScreen() {
   );
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-gray-50`}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.bg }]}>
       {/* Real-time Payment Notification Banner */}
       {newPaymentAlert && (
-        <View style={tw`absolute top-20 left-4 right-4 bg-[#00327d] border border-blue-400 p-4 rounded-2xl flex-row items-center gap-3.5 z-50 shadow-lg`}>
-          <View style={tw`w-10 h-10 rounded-full bg-[#32cd32] items-center justify-center`}>
-            <Text style={tw`text-white font-bold text-base`}>✓</Text>
+        <View style={[
+          tw`absolute top-20 left-4 right-4 p-4 rounded-2xl flex-row items-center gap-3.5 z-50`,
+          {
+            backgroundColor: isDark ? '#0F2A0F' : '#F0FDF4',
+            borderWidth: 1,
+            borderColor: isDark ? '#22C55E40' : '#86EFAC',
+            shadowColor: '#22C55E',
+            shadowOpacity: 0.2,
+            shadowRadius: 12,
+            elevation: 8,
+          }
+        ]}>
+          <View style={[
+            tw`w-10 h-10 rounded-full items-center justify-center`,
+            { backgroundColor: '#22C55E20' }
+          ]}>
+            <Text style={{ color: '#22C55E', fontSize: 18 }}>✓</Text>
           </View>
           <View style={tw`flex-1`}>
-            <Text style={tw`text-[10px] font-black text-[#32cd32] uppercase tracking-widest`}>
-              Pago QR Simpli Recibido
+            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: theme.statusActive }]}>
+              Pago QR Recibido
             </Text>
-            <Text style={tw`text-white font-black text-sm mt-0.5`}>
-              Monto: Bs. {newPaymentAlert.amount.toFixed(2)}
+            <Text style={[tw`font-black text-sm mt-0.5`, { color: theme.text }]}>
+              Bs. {newPaymentAlert.amount.toFixed(2)}
             </Text>
-            <Text style={tw`text-blue-200 text-[10px] mt-0.5`}>
-              Celular: +591 {newPaymentAlert.phone}
+            <Text style={[tw`text-[10px] mt-0.5`, { color: theme.textMuted }]}>
+              +591 {newPaymentAlert.phone}
             </Text>
           </View>
         </View>
       )}
 
-      {/* Top Header - Premium Minimalist */}
-      <View style={tw`bg-white px-5 py-4 flex-row items-center justify-between border-b border-gray-100 shadow-sm`}>
+      {/* Top Header */}
+      <View style={[
+        tw`px-5 py-4 flex-row items-center justify-between`,
+        {
+          backgroundColor: theme.headerBg,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
+        }
+      ]}>
         <View>
-          <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-widest`}>La Paz Transit</Text>
-          <Text style={tw`text-base font-extrabold text-[#00327d] tracking-tight`}>Panel del Conductor</Text>
+          <Text style={[tw`text-[10px] font-bold uppercase tracking-widest`, { color: theme.textSubtle }]}>
+            Transporty OS
+          </Text>
+          <Text style={[tw`text-base font-extrabold tracking-tight`, { color: theme.text }]}>
+            Cabina del Conductor
+          </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleLogout}
-          style={tw`px-4 py-2 rounded-full border border-gray-200 bg-gray-50`}
+          style={[
+            tw`px-4 py-2 rounded-full`,
+            { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+          ]}
         >
-          <Text style={tw`text-gray-600 font-bold text-xs uppercase tracking-wider`}>Salir</Text>
+          <Text style={[tw`font-bold text-xs uppercase tracking-wider`, { color: theme.textMuted }]}>Salir</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={tw`flex-1 p-4`} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView
+        style={tw`flex-1`}
+        contentContainerStyle={[tw`p-4`, { paddingBottom: 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Driver Profile Card */}
-        <View style={tw`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-4`}>
+        <View style={[
+          tw`rounded-2xl p-5 mb-4`,
+          { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+        ]}>
           <View style={tw`flex-row items-center justify-between`}>
             <View style={tw`flex-row items-center gap-3.5`}>
-              <View style={tw`w-12 h-12 rounded-2xl bg-blue-50 items-center justify-center border border-blue-100`}>
-                <Text style={tw`text-lg font-black text-[#00327d]`}>
+              {/* Avatar */}
+              <View style={[
+                tw`w-12 h-12 rounded-2xl items-center justify-center`,
+                { backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + '30' }
+              ]}>
+                <Text style={[tw`text-lg font-black`, { color: theme.accent }]}>
                   {driverInfo?.name?.substring(0, 2).toUpperCase() || 'CH'}
                 </Text>
               </View>
               <View style={tw`flex-1 pr-2`}>
-                <Text style={tw`text-gray-900 font-black text-base`} numberOfLines={1}>
+                <Text style={[tw`font-black text-base`, { color: theme.text }]} numberOfLines={1}>
                   {driverInfo?.name || 'Cargando...'}
                 </Text>
-                <Text style={tw`text-gray-400 text-xs font-semibold mt-0.5`} numberOfLines={1}>
-                  Placa {driverInfo?.placa || '...'} • {driverInfo?.organization?.name || 'Sindicato'}
+                <Text style={[tw`text-xs font-semibold mt-0.5`, { color: theme.textMuted }]} numberOfLines={1}>
+                  Placa {driverInfo?.placa || '—'} • {driverInfo?.organization?.name || 'Sindicato'}
                 </Text>
               </View>
             </View>
+            {/* Status Badge */}
             <View style={[
               tw`px-3 py-1.5 rounded-full flex-row items-center gap-1.5`,
-              isTracking ? tw`bg-green-50` : tw`bg-gray-100`
+              {
+                backgroundColor: isTracking
+                  ? (isDark ? '#22C55E18' : '#F0FDF4')
+                  : (isDark ? theme.cardElevated : theme.cardElevated),
+                borderWidth: 1,
+                borderColor: isTracking ? '#22C55E40' : theme.border,
+              }
             ]}>
-              <View style={[tw`w-2 h-2 rounded-full`, isTracking ? tw`bg-[#32cd32]` : tw`bg-gray-400`]} />
+              <View style={[
+                tw`w-2 h-2 rounded-full`,
+                { backgroundColor: isTracking ? theme.statusActive : theme.statusInactive }
+              ]} />
               <Text style={[
                 tw`text-[10px] font-black uppercase tracking-widest`,
-                isTracking ? tw`text-green-700` : tw`text-gray-500`
+                { color: isTracking ? theme.statusActive : theme.textMuted }
               ]}>
                 {isTracking ? 'En Ruta' : 'Inactivo'}
               </Text>
             </View>
           </View>
-          
-          <View style={tw`mt-5 pt-4 border-t border-gray-50 flex-row justify-between items-center`}>
+
+          {/* Progress bar */}
+          <View style={[tw`mt-5 pt-4 flex-row justify-between items-center`, { borderTopWidth: 1, borderTopColor: theme.border }]}>
             <View>
-              <Text style={tw`text-gray-400 text-[10px] font-bold uppercase tracking-wider`}>Nivel de Conductor</Text>
-              <Text style={tw`text-gray-700 text-xs font-bold mt-1`}>Plata • 9 pts para bono</Text>
+              <Text style={[tw`text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Nivel de Conductor</Text>
+              <Text style={[tw`text-xs font-bold mt-1`, { color: theme.textMuted }]}>Plata • 9 pts para bono</Text>
             </View>
-            <View style={tw`w-28 bg-gray-100 rounded-full h-2 overflow-hidden`}>
-              <View style={[tw`bg-[#00327d] h-full rounded-full`, { width: '70%' }]} />
+            <View style={[tw`w-28 rounded-full h-2 overflow-hidden`, { backgroundColor: theme.cardElevated }]}>
+              <View style={[tw`h-full rounded-full`, { width: '70%', backgroundColor: theme.accent }]} />
             </View>
           </View>
         </View>
 
-        {/* Route Selector Card - Collapsible Searchable */}
-        <View style={tw`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-4`}>
-          <Text style={tw`text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-3`}>1. Ruta de Operación</Text>
-          
+        {/* Route Selector Card */}
+        <View style={[
+          tw`rounded-2xl p-5 mb-4`,
+          { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+        ]}>
+          <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-3`, { color: theme.textSubtle }]}>
+            1. Ruta de Operación
+          </Text>
+
           {loading ? (
-            <ActivityIndicator color="#00327d" size="small" style={tw`py-4`} />
+            <ActivityIndicator color={theme.accent} size="small" style={tw`py-4`} />
           ) : selectedRoute && !showRoutePicker ? (
             <TouchableOpacity
               onPress={() => !isTracking && setShowRoutePicker(true)}
               disabled={isTracking}
               style={[
-                tw`flex-row items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100`,
-                isTracking && tw`opacity-80`
+                tw`flex-row items-center justify-between p-4 rounded-xl`,
+                {
+                  backgroundColor: theme.cardElevated,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  opacity: isTracking ? 0.8 : 1,
+                }
               ]}
             >
               <View style={tw`flex-1 pr-3`}>
                 <View style={tw`flex-row items-center gap-2 mb-1.5`}>
-                  <View style={tw`bg-[#00327d] px-2 py-0.5 rounded`}>
+                  <View style={[tw`px-2 py-0.5 rounded`, { backgroundColor: theme.accent }]}>
                     <Text style={tw`text-white text-[10px] font-black uppercase`}>Línea {selectedRoute.line_code}</Text>
                   </View>
-                  <Text style={tw`text-gray-800 font-extrabold text-sm`} numberOfLines={1}>{selectedRoute.name}</Text>
+                  <Text style={[tw`font-extrabold text-sm`, { color: theme.text }]} numberOfLines={1}>
+                    {selectedRoute.name}
+                  </Text>
                 </View>
-                <Text style={tw`text-gray-500 text-xs`} numberOfLines={1}>
+                <Text style={[tw`text-xs`, { color: theme.textMuted }]} numberOfLines={1}>
                   {selectedRoute.start_point} ➔ {selectedRoute.end_point}
                 </Text>
               </View>
               {!isTracking && (
-                <Text style={tw`text-[#00327d] text-xs font-black uppercase tracking-wider`}>Cambiar</Text>
+                <Text style={[tw`text-xs font-black uppercase tracking-wider`, { color: theme.accent }]}>Cambiar</Text>
               )}
             </TouchableOpacity>
           ) : (
             <View>
-              <View style={tw`flex-row items-center border border-gray-200 rounded-xl px-3.5 bg-gray-50 mb-3`}>
-                <Text style={tw`text-gray-400 mr-2 text-sm`}>🔍</Text>
+              <View style={[
+                tw`flex-row items-center rounded-xl px-3.5 mb-3`,
+                { backgroundColor: theme.cardElevated, borderWidth: 1, borderColor: theme.border }
+              ]}>
+                <Text style={[tw`mr-2 text-sm`, { color: theme.textSubtle }]}>🔍</Text>
                 <TextInput
                   placeholder="Buscar línea o destino..."
-                  placeholderTextColor="#9ca3af"
-                  style={tw`flex-1 py-3 text-sm text-gray-900 font-semibold`}
+                  placeholderTextColor={theme.textSubtle}
+                  style={[tw`flex-1 py-3 text-sm font-semibold`, { color: theme.text }]}
                   value={routeSearchQuery}
                   onChangeText={setRouteSearchQuery}
                   autoFocus
                 />
                 {routeSearchQuery !== '' && (
                   <TouchableOpacity onPress={() => setRouteSearchQuery('')}>
-                    <Text style={tw`text-gray-400 font-bold text-xs px-2`}>✕</Text>
+                    <Text style={[tw`font-bold text-xs px-2`, { color: theme.textMuted }]}>✕</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -391,102 +458,116 @@ export default function DriverScreen() {
                         setRouteSearchQuery('');
                       }}
                       style={[
-                        tw`p-3 border-b border-gray-50 flex-row items-center justify-between`,
-                        isCurrent && tw`bg-blue-50/50`
+                        tw`p-3 flex-row items-center justify-between`,
+                        {
+                          borderBottomWidth: 1,
+                          borderBottomColor: theme.border,
+                          backgroundColor: isCurrent ? theme.accentSoft : 'transparent',
+                        }
                       ]}
                     >
                       <View style={tw`flex-1 pr-3`}>
-                        <Text style={tw`text-[#00327d] text-[10px] font-black uppercase tracking-wider mb-1`}>
+                        <Text style={[tw`text-[10px] font-black uppercase tracking-wider mb-1`, { color: theme.accent }]}>
                           Línea {route.line_code}
                         </Text>
-                        <Text style={tw`text-gray-800 font-bold text-sm`} numberOfLines={1}>{route.name}</Text>
-                        <Text style={tw`text-gray-400 text-xs mt-0.5`} numberOfLines={1}>{route.start_point} ➔ {route.end_point}</Text>
+                        <Text style={[tw`font-bold text-sm`, { color: theme.text }]} numberOfLines={1}>{route.name}</Text>
+                        <Text style={[tw`text-xs mt-0.5`, { color: theme.textMuted }]} numberOfLines={1}>
+                          {route.start_point} ➔ {route.end_point}
+                        </Text>
                       </View>
-                      {isCurrent && <Text style={tw`text-[#00327d] font-bold text-sm`}>✓</Text>}
+                      {isCurrent && <Text style={[tw`font-bold text-sm`, { color: theme.accent }]}>✓</Text>}
                     </TouchableOpacity>
                   );
                 })}
                 {filteredRoutes.length === 0 && (
                   <View style={tw`py-6 items-center`}>
-                    <Text style={tw`text-gray-400 text-xs font-semibold`}>No se encontraron rutas</Text>
+                    <Text style={[tw`text-xs font-semibold`, { color: theme.textMuted }]}>No se encontraron rutas</Text>
                   </View>
                 )}
               </ScrollView>
-              
+
               {selectedRoute && (
-                <TouchableOpacity 
-                  onPress={() => {
-                    setShowRoutePicker(false);
-                    setRouteSearchQuery('');
-                  }}
+                <TouchableOpacity
+                  onPress={() => { setShowRoutePicker(false); setRouteSearchQuery(''); }}
                   style={tw`mt-3 py-2 items-center`}
                 >
-                  <Text style={tw`text-gray-400 text-xs font-bold uppercase tracking-wider`}>Cancelar</Text>
+                  <Text style={[tw`text-xs font-bold uppercase tracking-wider`, { color: theme.textMuted }]}>Cancelar</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
 
           {isTracking && (
-            <Text style={tw`text-[10px] text-amber-600 font-bold mt-2.5 text-center uppercase tracking-wider`}>
-              * Finaliza el turno para poder cambiar de ruta
+            <Text style={[tw`text-[10px] font-bold mt-2.5 text-center uppercase tracking-wider`, { color: theme.statusWarning }]}>
+              * Finaliza el turno para cambiar de ruta
             </Text>
           )}
         </View>
 
         {/* Live GPS Control Card */}
-        <View style={tw`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-4`}>
+        <View style={[
+          tw`rounded-2xl p-5 mb-4`,
+          { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+        ]}>
           <View style={tw`flex-row justify-between items-center mb-3`}>
-            <Text style={tw`text-gray-400 text-[10px] font-bold uppercase tracking-wider`}>
+            <Text style={[tw`text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>
               2. Transmisión GPS en Vivo
             </Text>
             {coords && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setIsMapExpanded(!isMapExpanded)}
-                style={tw`bg-blue-50 px-3.5 py-1.5 rounded-lg border border-blue-100`}
+                style={[
+                  tw`px-3.5 py-1.5 rounded-lg`,
+                  { backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + '30' }
+                ]}
               >
-                <Text style={tw`text-[#00327d] text-[10px] font-extrabold uppercase tracking-wider`}>
-                  {isMapExpanded ? '↙ Reducir Mapa' : '↗ Expandir Mapa'}
+                <Text style={[tw`text-[10px] font-extrabold uppercase tracking-wider`, { color: theme.accent }]}>
+                  {isMapExpanded ? '↙ Reducir' : '↗ Expandir'}
                 </Text>
               </TouchableOpacity>
             )}
           </View>
-          <Text style={tw`text-gray-500 text-xs leading-relaxed mb-4`}>
-            Al iniciar el turno, tu posición GPS se compartirá en tiempo real con los pasajeros suscritos en el mapa.
+          <Text style={[tw`text-xs leading-relaxed mb-4`, { color: theme.textMuted }]}>
+            Al iniciar el turno, tu posición GPS se compartirá en tiempo real con los pasajeros.
           </Text>
 
           {coords && (
-            <View style={tw`bg-gray-50 rounded-xl p-3 border border-gray-100 flex-row justify-around mb-4`}>
+            <View style={[
+              tw`rounded-xl p-3 flex-row justify-around mb-4`,
+              { backgroundColor: theme.cardElevated, borderWidth: 1, borderColor: theme.border }
+            ]}>
               <View style={tw`items-center`}>
-                <Text style={tw`text-gray-400 text-[9px] uppercase font-bold tracking-wider`}>Latitud</Text>
-                <Text style={tw`text-gray-800 font-black text-xs mt-0.5`}>
-                  {coords.latitude.toFixed(6)}
+                <Text style={[tw`text-[9px] uppercase font-bold tracking-wider`, { color: theme.textSubtle }]}>Latitud</Text>
+                <Text style={[tw`font-black text-xs mt-0.5`, { color: theme.text }]}>
+                  {coords.latitude.toFixed(5)}
                 </Text>
               </View>
+              <View style={[tw`w-px`, { backgroundColor: theme.border }]} />
               <View style={tw`items-center`}>
-                <Text style={tw`text-gray-400 text-[9px] uppercase font-bold tracking-wider`}>Longitud</Text>
-                <Text style={tw`text-gray-800 font-black text-xs mt-0.5`}>
-                  {coords.longitude.toFixed(6)}
+                <Text style={[tw`text-[9px] uppercase font-bold tracking-wider`, { color: theme.textSubtle }]}>Longitud</Text>
+                <Text style={[tw`font-black text-xs mt-0.5`, { color: theme.text }]}>
+                  {coords.longitude.toFixed(5)}
                 </Text>
               </View>
+              <View style={[tw`w-px`, { backgroundColor: theme.border }]} />
               <View style={tw`items-center`}>
-                <Text style={tw`text-gray-400 text-[9px] uppercase font-bold tracking-wider`}>Velocidad</Text>
-                <Text style={tw`text-gray-800 font-black text-xs mt-0.5`}>
-                  {coords.speed !== null ? `${Math.round((coords.speed || 0) * 3.6)} km/h` : '0 km/h'}
+                <Text style={[tw`text-[9px] uppercase font-bold tracking-wider`, { color: theme.textSubtle }]}>Velocidad</Text>
+                <Text style={[tw`font-black text-xs mt-0.5`, { color: theme.accent }]}>
+                  {coords.speed !== null ? `${Math.round((coords.speed || 0) * 3.6)} km/h` : '— km/h'}
                 </Text>
               </View>
             </View>
           )}
 
-          {/* Interactive Web Map */}
+          {/* Map */}
           {coords && (
             <View style={[
-              tw`w-full mb-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm`,
-              { height: isMapExpanded ? 480 : 280 }
+              tw`w-full mb-4 rounded-xl overflow-hidden`,
+              { height: isMapExpanded ? 480 : 280, borderWidth: 1, borderColor: theme.border }
             ]}>
-              <LiveMapWeb 
-                centerLat={coords.latitude} 
-                centerLng={coords.longitude} 
+              <LiveMapWeb
+                centerLat={coords.latitude}
+                centerLng={coords.longitude}
                 zoom={16}
                 markers={[{
                   id: driverId,
@@ -494,46 +575,80 @@ export default function DriverScreen() {
                   lng: coords.longitude,
                   title: 'Mi Ubicación Actual',
                   isDriver: true
-                }]} 
+                }]}
               />
             </View>
           )}
 
           {errorMsg && (
-            <Text style={tw`text-red-500 text-xs font-bold mb-3.5 text-center uppercase tracking-wider`}>
+            <Text style={[tw`text-xs font-bold mb-3.5 text-center uppercase tracking-wider`, { color: theme.statusDanger }]}>
               ⚠ {errorMsg}
             </Text>
           )}
 
+          {/* Primary CTA */}
           <TouchableOpacity
             onPress={toggleTurnType}
             style={[
-              tw`w-full py-4 rounded-full items-center flex-row justify-center shadow-md`,
-              isTracking ? tw`bg-red-500 shadow-red-100` : tw`bg-[#00327d] shadow-blue-100`
+              tw`w-full py-4 rounded-2xl items-center flex-row justify-center`,
+              {
+                backgroundColor: isTracking ? theme.statusDanger : theme.accent,
+                shadowColor: isTracking ? theme.statusDanger : theme.accent,
+                shadowOpacity: 0.35,
+                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 6,
+              }
             ]}
           >
-            <View style={[tw`w-2.5 h-2.5 rounded-full mr-2`, isTracking ? tw`bg-white` : tw`bg-green-400`]} />
+            <View style={[
+              tw`w-2.5 h-2.5 rounded-full mr-2.5`,
+              { backgroundColor: isTracking ? '#fff' : '#fff' }
+            ]} />
             <Text style={tw`text-white font-extrabold text-sm uppercase tracking-widest`}>
               {isTracking ? 'Finalizar Turno' : 'Iniciar Turno'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Turn Performance Metrics */}
-        <View style={tw`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm`}>
-          <Text style={tw`text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-3.5`}>Resumen de Rendimiento</Text>
-          <View style={tw`flex-row gap-3 justify-between`}>
-            <View style={tw`bg-gray-50 rounded-xl p-3 items-center flex-1 mx-0.5 border border-gray-100`}>
-              <Text style={tw`text-gray-400 text-[9px] uppercase font-bold tracking-wider text-center`}>Vueltas</Text>
-              <Text style={tw`text-gray-900 text-base font-black mt-1`}>{routesCompleted}</Text>
+        {/* Performance Metrics */}
+        <View style={[
+          tw`rounded-2xl p-5`,
+          { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+        ]}>
+          <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-3.5`, { color: theme.textSubtle }]}>
+            Resumen del Turno
+          </Text>
+          <View style={tw`flex-row gap-3`}>
+            {/* Vueltas */}
+            <View style={[
+              tw`rounded-xl p-3 items-center flex-1`,
+              { backgroundColor: theme.cardElevated, borderWidth: 1, borderColor: theme.border }
+            ]}>
+              <Text style={[tw`text-[9px] uppercase font-bold tracking-wider text-center`, { color: theme.textSubtle }]}>Vueltas</Text>
+              <Text style={[tw`text-base font-black mt-1`, { color: theme.text }]}>{routesCompleted}</Text>
             </View>
-            <View style={tw`bg-gray-50 rounded-xl p-3 items-center flex-1 mx-0.5 border border-gray-100`}>
-              <Text style={tw`text-gray-400 text-[9px] uppercase font-bold tracking-wider text-center`}>Activo</Text>
-              <Text style={tw`text-gray-900 text-base font-black mt-1`}>{hoursActive}</Text>
+            {/* Activo */}
+            <View style={[
+              tw`rounded-xl p-3 items-center flex-1`,
+              { backgroundColor: theme.cardElevated, borderWidth: 1, borderColor: theme.border }
+            ]}>
+              <Text style={[tw`text-[9px] uppercase font-bold tracking-wider text-center`, { color: theme.textSubtle }]}>Activo</Text>
+              <Text style={[tw`text-base font-black mt-1`, { color: theme.text }]}>{hoursActive}</Text>
             </View>
-            <View style={tw`bg-green-50/50 rounded-xl p-3 items-center flex-1 mx-0.5 border border-green-100`}>
-              <Text style={tw`text-[#006e0a] text-[9px] uppercase font-bold tracking-wider text-center`}>Ganado</Text>
-              <Text style={tw`text-green-800 text-base font-black mt-1`}>{accumulatedEarnings.toFixed(2)} BOB</Text>
+            {/* Ganado */}
+            <View style={[
+              tw`rounded-xl p-3 items-center flex-1`,
+              {
+                backgroundColor: isDark ? '#0F2A0F' : '#F0FDF4',
+                borderWidth: 1,
+                borderColor: isDark ? '#22C55E30' : '#86EFAC',
+              }
+            ]}>
+              <Text style={[tw`text-[9px] uppercase font-bold tracking-wider text-center`, { color: theme.statusActive }]}>Ganado</Text>
+              <Text style={[tw`text-base font-black mt-1`, { color: theme.statusActive }]}>
+                {accumulatedEarnings.toFixed(0)} Bs
+              </Text>
             </View>
           </View>
         </View>

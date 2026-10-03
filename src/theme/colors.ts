@@ -1,29 +1,25 @@
 /**
  * Transporty OS — Design System Tokens
- * Premium dark/light mode palette inspired by Uber/InDrive fleet management aesthetics.
+ * Premium dark/light mode palette inspired by provided reference designs (Uber/InDrive style).
  */
 
 export const palette = {
-  // Brand Electric Blue
-  electric50:  '#eef8ff',
-  electric200: '#bce3fd',
-  electric300: '#80cffd',
-  electric400: '#3cb8fa',
-  electric500: '#12a0ef',
-  electric600: '#037fcd',
-  electric700: '#0364a6',
-  electric800: '#065589',
-  electric900: '#0a4771',
+  // Brand Vibrant Orange/Amber
+  primary50:  '#fff8ed',
+  primary200: '#fed7aa',
+  primary300: '#fdba74',
+  primary400: '#fb923c',
+  primary500: '#f97316', // Main Accent
+  primary600: '#ea580c',
+  primary700: '#c2410c',
+  primary800: '#9a3412',
+  primary900: '#7c2d12',
 
-  // Surface (dark mode)
-  darkBase:    '#080D16',
-  darkCard:    '#0F1828',
-  darkBorder:  '#1E2D42',
-  darkMuted:   '#253447',
-
-  // Accent Cyan
-  cyan400: '#22d3ee',
-  cyan500: '#06b6d4',
+  // Surface (dark mode) - Deep rich dark gray/blacks
+  darkBase:    '#121212',
+  darkCard:    '#1A1C20',
+  darkBorder:  '#2C2F36',
+  darkMuted:   '#383B42',
 
   // Status
   green400: '#4ade80',
@@ -70,43 +66,43 @@ export interface AppTheme {
 }
 
 export const darkTheme: AppTheme = {
-  bg:              '#080D16',
-  card:            '#0F1828',
-  cardElevated:    '#162035',
-  border:          '#1E2D42',
-  text:            '#E8EFF7',
-  textMuted:       '#7A9BBF',
-  textSubtle:      '#4D6A88',
-  accent:          '#3CB8FA',
-  accentSoft:      '#3CB8FA1A',
+  bg:              '#121212',
+  card:            '#1A1C20',
+  cardElevated:    '#222429',
+  border:          '#2C2F36',
+  text:            '#FFFFFF',
+  textMuted:       '#A0A4AB',
+  textSubtle:      '#646973',
+  accent:          '#F97316',
+  accentSoft:      '#F973161A',
   statusActive:    '#4ADE80',
   statusInactive:  '#475569',
   statusWarning:   '#FBBF24',
   statusDanger:    '#F87171',
-  inputBg:         '#111B2B',
-  inputBorder:     '#1E2D42',
-  headerBg:        '#080D16F5',
-  tabActiveBg:     '#3CB8FA18',
+  inputBg:         '#1C1E23',
+  inputBorder:     '#2C2F36',
+  headerBg:        '#121212F5', // Glassmorphism base
+  tabActiveBg:     '#F9731618',
 };
 
 export const lightTheme: AppTheme = {
-  bg:              '#F0F4F8',
+  bg:              '#F5F7FA',
   card:            '#FFFFFF',
-  cardElevated:    '#F8FAFC',
+  cardElevated:    '#FAFAFA',
   border:          '#E2E8F0',
-  text:            '#0F172A',
+  text:            '#1A1C20',
   textMuted:       '#64748B',
   textSubtle:      '#94A3B8',
-  accent:          '#037FCD',
-  accentSoft:      '#037FCD12',
+  accent:          '#EA580C',
+  accentSoft:      '#EA580C12',
   statusActive:    '#16A34A',
   statusInactive:  '#94A3B8',
   statusWarning:   '#D97706',
   statusDanger:    '#DC2626',
-  inputBg:         '#F8FAFC',
+  inputBg:         '#FFFFFF',
   inputBorder:     '#E2E8F0',
   headerBg:        '#FFFFFFEE',
-  tabActiveBg:     '#037FCD0D',
+  tabActiveBg:     '#EA580C0D',
 };
 
 export const getTheme = (mode: ThemeMode): AppTheme =>

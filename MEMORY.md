@@ -84,6 +84,13 @@ Hemos consolidado un MVP robusto de telemetría y administración utilizando **E
 ---
 
 ## 4. Tareas Pendientes (Siguiente Sesión)
+- **Rediseño UI/UX (Nivel Competitivo - Uber/inDrive):**
+  - Evaluar diseños de referencia proporcionados por el usuario.
+  - Ajustar colores, tipografías, sombras y micro-interacciones a nivel profesional.
+  - Refinar el "Dark Mode" y "Glassmorphism" para que sean competitivos con las apps de Silicon Valley.
+- **Validación del Despliegue Actual (Vercel & EAS):**
+  - Vercel: Despliegue de la versión "Rediseño Premium" completado (requirió bypass manual a Vercel CLI).
+  - EAS Update (Móvil): El paquete JS fue empujado exitosamente; pendiente que el usuario aplique doble reinicio de la app móvil para forzar la actualización OTA desde Expo.
 - **Evaluación de Resultados en Campo (Piloto La Paz):**
   - Instalar el APK final de Android en dispositivos de choferes reales.
   - Validar la precisión de telemetría y retención de pantalla (Screen Wake Lock) en recorridos físicos.

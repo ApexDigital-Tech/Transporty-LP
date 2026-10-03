@@ -38,9 +38,9 @@ const BackgroundMesh = ({ isDark }: { isDark: boolean }) => {
           { opacity: pulse, transform: [{ rotate: spin }] }
         ]}
       >
-        <View style={tw`absolute top-[8%] left-[15%] w-80 h-80 rounded-full ${isDark ? 'bg-[#3CB8FA]/25' : 'bg-[#037FCD]/12'}`} />
-        <View style={tw`absolute bottom-[15%] right-[5%] w-96 h-96 rounded-full ${isDark ? 'bg-[#6366F1]/20' : 'bg-[#818CF8]/10'}`} />
-        <View style={tw`absolute top-[45%] right-[25%] w-64 h-64 rounded-full ${isDark ? 'bg-[#06B6D4]/15' : 'bg-[#22D3EE]/8'}`} />
+        <View style={tw`absolute top-[8%] left-[15%] w-80 h-80 rounded-full ${isDark ? 'bg-[#F97316]/20' : 'bg-[#EA580C]/10'}`} />
+        <View style={tw`absolute bottom-[15%] right-[5%] w-96 h-96 rounded-full ${isDark ? 'bg-[#FBBF24]/15' : 'bg-[#F59E0B]/08'}`} />
+        <View style={tw`absolute top-[45%] right-[25%] w-64 h-64 rounded-full ${isDark ? 'bg-[#F97316]/10' : 'bg-[#FED7AA]/20'}`} />
       </Animated.View>
     </View>
   );
@@ -173,9 +173,9 @@ export default function IndexScreen() {
             style={[
               tw`w-[88px] h-[88px] rounded-[26px] items-center justify-center mb-7`,
               {
-                backgroundColor: isDark ? 'rgba(60,184,250,0.08)' : 'rgba(3,127,205,0.08)',
+                backgroundColor: isDark ? 'rgba(249,115,22,0.1)' : 'rgba(234,88,12,0.08)',
                 borderWidth: 1.5,
-                borderColor: isDark ? 'rgba(60,184,250,0.2)' : 'rgba(3,127,205,0.15)',
+                borderColor: isDark ? 'rgba(249,115,22,0.25)' : 'rgba(234,88,12,0.18)',
               }
             ]}
           >
@@ -187,9 +187,9 @@ export default function IndexScreen() {
             style={[
               tw`px-5 py-1.5 rounded-full mb-5`,
               {
-                backgroundColor: isDark ? 'rgba(60,184,250,0.1)' : 'rgba(3,127,205,0.08)',
+                backgroundColor: isDark ? 'rgba(249,115,22,0.12)' : 'rgba(234,88,12,0.08)',
                 borderWidth: 1,
-                borderColor: isDark ? 'rgba(60,184,250,0.15)' : 'rgba(3,127,205,0.12)',
+                borderColor: isDark ? 'rgba(249,115,22,0.2)' : 'rgba(234,88,12,0.15)',
               }
             ]}
           >
