@@ -4,7 +4,16 @@ import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Platform
 import tw from 'twrnc';
 import { useAuth } from '@/hooks/useAuth';
 import { useStore } from '@/hooks/useStore';
+import { useTheme } from '@/theme';
 import { supabase } from '../../services/supabase';
+import { Ionicons } from '@expo/vector-icons';
+
+interface MenuItem {
+  name: string;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route: string;
+}
 
 export default function AdminLayout() {
   const { width } = useWindowDimensions();
@@ -12,6 +21,7 @@ export default function AdminLayout() {
   const { triggerRefresh, refreshTrigger, selectedImpersonatedOrg } = useStore();
   const router = useRouter();
   const segments = useSegments();
+  const { theme, isDark, toggleTheme } = useTheme();
   
   const isDesktop = width >= 768;
   const activeTab = segments[1] || 'dashboard';
@@ -35,7 +45,7 @@ export default function AdminLayout() {
         let orgId = null;
         let role = 'admin';
         
-        // Fallback/Override manual para números de prueba
+        // Fallback/Override para números de prueba
         if (phone.endsWith('72845621') || phone.endsWith('78756107')) {
           role = 'superadmin';
           orgId = null;
@@ -47,9 +57,7 @@ export default function AdminLayout() {
             .eq('name', 'SINDICATO 14 DE SEPTIEMBRE')
             .limit(1)
             .maybeSingle();
-          if (orgData) {
-            orgId = orgData.id;
-          }
+          if (orgData) orgId = orgData.id;
         } else {
           const { data: adminProfile } = await supabase
             .from('admin_profiles')
@@ -67,18 +75,14 @@ export default function AdminLayout() {
             .select('name, logo_url, banner_url')
             .eq('id', orgId)
             .maybeSingle();
-          if (orgBranding) {
-            setCurrentOrgBranding(orgBranding);
-          }
+          if (orgBranding) setCurrentOrgBranding(orgBranding);
         } else if (role === 'superadmin' && selectedImpersonatedOrg) {
           const { data: orgBranding } = await supabase
             .from('organizations')
             .select('name, logo_url, banner_url')
             .eq('id', selectedImpersonatedOrg)
             .maybeSingle();
-          if (orgBranding) {
-            setCurrentOrgBranding(orgBranding);
-          }
+          if (orgBranding) setCurrentOrgBranding(orgBranding);
         } else {
           setCurrentOrgBranding(null);
         }
@@ -91,82 +95,101 @@ export default function AdminLayout() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       loadBranding();
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => { subscription.unsubscribe(); };
   }, [refreshTrigger, selectedImpersonatedOrg]);
 
-  const menuItems = [
-    { name: 'dashboard', label: 'Panel de Control', icon: '📊', route: '/(admin)/dashboard' },
-    { name: 'routes', label: 'Gestión de Rutas', icon: '🛤️', route: '/(admin)/routes' },
-    { name: 'drivers', label: 'Gestión de Choferes', icon: '👥', route: '/(admin)/drivers' },
-    { name: 'tracking', label: 'Monitoreo en Vivo', icon: '📍', route: '/(admin)/tracking' },
-    { name: 'reports', label: 'Reportes', icon: '📈', route: '/(admin)/reports' },
+  const menuItems: MenuItem[] = [
+    { name: 'dashboard', label: 'Panel de Control', icon: 'grid-outline', route: '/(admin)/dashboard' },
+    { name: 'routes', label: 'Gestión de Rutas', icon: 'map-outline', route: '/(admin)/routes' },
+    { name: 'drivers', label: 'Gestión de Choferes', icon: 'people-outline', route: '/(admin)/drivers' },
+    { name: 'tracking', label: 'Monitoreo en Vivo', icon: 'locate-outline', route: '/(admin)/tracking' },
+    { name: 'reports', label: 'Reportes', icon: 'stats-chart-outline', route: '/(admin)/reports' },
   ];
 
   return (
-    <View style={tw`flex-1 ${isDesktop ? 'flex-row' : 'flex-col'} bg-gray-50`}>
-      {/* Mobile Top Header */}
+    <View style={[tw`flex-1 ${isDesktop ? 'flex-row' : 'flex-col'}`, { backgroundColor: theme.bg }]}>
+      {/* ─── Mobile Top Header ─── */}
       {!isDesktop && (
         <View style={[
-          tw`bg-slate-900 px-4 pb-3.5 flex-row justify-between items-center border-b border-slate-800`,
-          { paddingTop: Platform.OS === 'android' ? 40 : Platform.OS === 'ios' ? 48 : 14 }
+          tw`px-4 pb-3 flex-row justify-between items-center`,
+          {
+            backgroundColor: theme.headerBg,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.border,
+            paddingTop: Platform.OS === 'android' ? 42 : Platform.OS === 'ios' ? 50 : 14
+          }
         ]}>
           <View style={tw`flex-row items-center gap-2.5`}>
             {currentOrgBranding?.logo_url ? (
               <Image source={{ uri: currentOrgBranding.logo_url }} style={tw`w-8 h-8 rounded-lg`} />
             ) : (
-              <Text style={tw`text-lg`}>🚌</Text>
+              <View style={[tw`w-8 h-8 rounded-lg items-center justify-center`, { backgroundColor: theme.accentSoft }]}>
+                <Ionicons name="bus" size={18} color={theme.accent} />
+              </View>
             )}
-            <Text style={tw`text-white font-extrabold text-xs tracking-tight uppercase max-w-[140px]`} numberOfLines={1}>
-              {currentOrgBranding?.name || 'La Paz Transit'}
+            <Text style={[tw`font-extrabold text-xs tracking-tight uppercase max-w-[140px]`, { color: theme.text }]} numberOfLines={1}>
+              {currentOrgBranding?.name || 'Transporty OS'}
             </Text>
           </View>
           <View style={tw`flex-row items-center gap-2`}>
-            <TouchableOpacity 
-              onPress={triggerRefresh} 
-              style={tw`p-2 bg-slate-800/80 rounded-lg border border-slate-700/50`}
-              activeOpacity={0.7}
+            <TouchableOpacity
+              onPress={toggleTheme}
+              style={[tw`p-2.5 rounded-xl`, { backgroundColor: theme.accentSoft }]}
             >
-              <Text style={tw`text-slate-200 text-xs font-bold`}>🔄 Actualizar</Text>
+              <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={16} color={isDark ? '#FBBF24' : '#475569'} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={signOut} 
-              style={tw`p-2 bg-red-950/40 rounded-lg border border-red-900/30`}
-              activeOpacity={0.7}
+            <TouchableOpacity
+              onPress={triggerRefresh}
+              style={[tw`p-2.5 rounded-xl`, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}
             >
-              <Text style={tw`text-red-400 text-xs font-bold`}>🚪 Salir</Text>
+              <Ionicons name="refresh" size={16} color={theme.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={signOut}
+              style={[tw`p-2.5 rounded-xl`, { backgroundColor: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(239,68,68,0.06)' }]}
+            >
+              <Ionicons name="log-out-outline" size={16} color={theme.statusDanger} />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Desktop Sidebar */}
+      {/* ─── Desktop Sidebar ─── */}
       {isDesktop && (
-        <View style={tw`w-68 bg-slate-900 border-r border-slate-800 flex-col justify-between p-5 h-full`}>
+        <View style={[
+          tw`w-64 flex-col justify-between p-4 h-full`,
+          {
+            backgroundColor: isDark ? '#0A1020' : '#FFFFFF',
+            borderRightWidth: 1,
+            borderRightColor: theme.border,
+          }
+        ]}>
           <View style={tw`flex-1`}>
-            {/* Header / Branding */}
-            <View style={tw`mb-8`}>
-              <View style={tw`flex-row items-center gap-3 mb-1`}>
+            {/* Sidebar Header / Branding */}
+            <View style={tw`mb-8 mt-2`}>
+              <View style={tw`flex-row items-center gap-3 mb-2`}>
                 {currentOrgBranding?.logo_url ? (
                   <Image source={{ uri: currentOrgBranding.logo_url }} style={tw`w-10 h-10 rounded-xl`} />
                 ) : (
-                  <Text style={tw`text-2xl`}>🚌</Text>
+                  <View style={[tw`w-10 h-10 rounded-xl items-center justify-center`, { backgroundColor: theme.accentSoft }]}>
+                    <Ionicons name="bus" size={22} color={theme.accent} />
+                  </View>
                 )}
-                <Text style={tw`text-white font-extrabold text-sm tracking-tight uppercase flex-1`} numberOfLines={1}>
-                  {currentOrgBranding?.name || 'La Paz Transit'}
-                </Text>
+                <View style={tw`flex-1`}>
+                  <Text style={[tw`font-extrabold text-sm tracking-tight`, { color: theme.text }]} numberOfLines={1}>
+                    {currentOrgBranding?.name || 'Transporty OS'}
+                  </Text>
+                  <Text style={[tw`text-[10px] font-semibold uppercase tracking-wider`, { color: theme.accent }]}>
+                    {currentOrgBranding ? 'Portal Sindicato' : 'Operaciones'}
+                  </Text>
+                </View>
               </View>
-              <Text style={tw`text-xs text-blue-400 font-semibold uppercase tracking-wider ${currentOrgBranding ? 'pl-13' : 'pl-8'}`}>
-                {currentOrgBranding ? 'Portal Sindicato' : 'Operaciones Centrales'}
-              </Text>
             </View>
 
-            {/* Sidebar Title */}
-            <View style={tw`mb-6 pl-2`}>
-              <Text style={tw`text-slate-400 text-xs font-bold uppercase tracking-widest`}>Control de Tránsito</Text>
-            </View>
+            {/* Section Label */}
+            <Text style={[tw`text-[10px] font-bold uppercase tracking-[0.15em] ml-3 mb-3`, { color: theme.textSubtle }]}>
+              Navegación
+            </Text>
 
             {/* Menu Items */}
             <ScrollView showsVerticalScrollIndicator={false} style={tw`flex-1`}>
@@ -176,12 +199,29 @@ export default function AdminLayout() {
                   <TouchableOpacity
                     key={item.name}
                     onPress={() => router.replace(item.route as any)}
-                    style={tw`flex-row items-center gap-3.5 px-4 py-3 rounded-xl mb-2 ${
-                      isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30' : 'bg-transparent text-slate-300 hover:bg-slate-800/40'
-                    }`}
+                    style={[
+                      tw`flex-row items-center gap-3 px-3 py-3 rounded-xl mb-1`,
+                      {
+                        backgroundColor: isActive ? theme.accentSoft : 'transparent',
+                      }
+                    ]}
                   >
-                    <Text style={tw`text-lg`}>{item.icon}</Text>
-                    <Text style={tw`text-sm font-semibold tracking-wide ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                    <View
+                      style={[
+                        tw`w-8 h-8 rounded-lg items-center justify-center`,
+                        { backgroundColor: isActive ? theme.accent : 'transparent' }
+                      ]}
+                    >
+                      <Ionicons
+                        name={isActive ? (item.icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : item.icon}
+                        size={18}
+                        color={isActive ? '#FFFFFF' : theme.textMuted}
+                      />
+                    </View>
+                    <Text style={[
+                      tw`text-[13px] font-semibold tracking-wide`,
+                      { color: isActive ? theme.accent : theme.textMuted }
+                    ]}>
                       {item.label}
                     </Text>
                   </TouchableOpacity>
@@ -191,90 +231,97 @@ export default function AdminLayout() {
           </View>
 
           {/* Bottom Actions */}
-          <View style={tw`pt-6 border-t border-slate-800`}>
-            {/* Plan a Trip Button */}
+          <View style={[tw`pt-4 mt-2`, { borderTopWidth: 1, borderTopColor: theme.border }]}>
+            {/* Theme Toggle */}
             <TouchableOpacity
-              onPress={() => alert('Planificador de viajes cargando...')}
-              style={tw`bg-blue-700/80 border border-blue-600 hover:bg-blue-600 px-4 py-3 rounded-xl flex-row items-center justify-center gap-2 mb-4`}
+              onPress={toggleTheme}
+              style={tw`flex-row items-center gap-3 px-3 py-2.5 rounded-xl mb-2`}
             >
-              <Text style={tw`text-white text-xs`}>➕</Text>
-              <Text style={tw`text-white font-bold text-xs uppercase tracking-wider`}>Planificar Viaje</Text>
+              <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={18} color={isDark ? '#FBBF24' : '#475569'} />
+              <Text style={[tw`text-xs font-semibold`, { color: theme.textMuted }]}>
+                {isDark ? 'Modo Claro' : 'Modo Oscuro'}
+              </Text>
             </TouchableOpacity>
 
-            {/* Help & Logout */}
+            {/* Refresh */}
             <TouchableOpacity
-              onPress={() => alert('Ayuda / Soporte Técnico')}
-              style={tw`flex-row items-center gap-3 px-4 py-2.5 rounded-lg mb-2`}
+              onPress={triggerRefresh}
+              style={tw`flex-row items-center gap-3 px-3 py-2.5 rounded-xl mb-2`}
             >
-              <Text style={tw`text-slate-400`}>❓</Text>
-              <Text style={tw`text-slate-300 text-xs font-bold uppercase tracking-wider`}>Ayuda</Text>
+              <Ionicons name="refresh" size={18} color={theme.textMuted} />
+              <Text style={[tw`text-xs font-semibold`, { color: theme.textMuted }]}>Actualizar Datos</Text>
             </TouchableOpacity>
 
+            {/* Sign Out */}
             <TouchableOpacity
               onPress={signOut}
-              style={tw`flex-row items-center gap-3 px-4 py-2.5 rounded-lg`}
+              style={tw`flex-row items-center gap-3 px-3 py-2.5 rounded-xl`}
             >
-              <Text style={tw`text-red-400`}>🚪</Text>
-              <Text style={tw`text-red-400 text-xs font-bold uppercase tracking-wider`}>Cerrar Sesión</Text>
+              <Ionicons name="log-out-outline" size={18} color={theme.statusDanger} />
+              <Text style={[tw`text-xs font-semibold`, { color: theme.statusDanger }]}>Cerrar Sesión</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Screen Container */}
+      {/* ─── Screen Container ─── */}
       <View style={tw`flex-1`}>
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: '#2563eb',
-            tabBarInactiveTintColor: '#64748b',
+            tabBarActiveTintColor: theme.accent,
+            tabBarInactiveTintColor: theme.textSubtle,
             tabBarStyle: isDesktop 
               ? { display: 'none' } 
-              : tw`bg-white border-t border-gray-100 shadow-sm h-16 pb-2`,
-            tabBarLabelStyle: tw`text-xs font-bold`,
+              : {
+                  backgroundColor: isDark ? theme.card : '#FFFFFF',
+                  borderTopWidth: 1,
+                  borderTopColor: theme.border,
+                  height: 64,
+                  paddingBottom: 6,
+                  paddingTop: 4,
+                },
+            tabBarLabelStyle: { fontSize: 10, fontWeight: '700' as const },
           }}
         >
           <Tabs.Screen
             name="dashboard"
             options={{
               title: 'Panel',
-              tabBarIcon: ({ color }) => <Text style={tw`text-lg`}>📊</Text>,
+              tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'grid' : 'grid-outline'} size={22} color={color} />,
             }}
           />
           <Tabs.Screen
             name="routes"
             options={{
               title: 'Rutas',
-              tabBarIcon: ({ color }) => <Text style={tw`text-lg`}>🛤️</Text>,
+              tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'map' : 'map-outline'} size={22} color={color} />,
             }}
           />
           <Tabs.Screen
             name="drivers"
             options={{
               title: 'Choferes',
-              tabBarIcon: ({ color }) => <Text style={tw`text-lg`}>👥</Text>,
+              tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />,
             }}
           />
           <Tabs.Screen
             name="tracking"
             options={{
               title: 'En Vivo',
-              tabBarIcon: ({ color }) => <Text style={tw`text-lg`}>📍</Text>,
+              tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'locate' : 'locate-outline'} size={22} color={color} />,
             }}
           />
           <Tabs.Screen
             name="reports"
             options={{
               title: 'Reportes',
-              tabBarIcon: ({ color }) => <Text style={tw`text-lg`}>📈</Text>,
+              tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={22} color={color} />,
             }}
           />
-          {/* Hide directory.tsx from tab bar while transitioning */}
           <Tabs.Screen
             name="directory"
-            options={{
-              href: null,
-            }}
+            options={{ href: null }}
           />
         </Tabs>
       </View>

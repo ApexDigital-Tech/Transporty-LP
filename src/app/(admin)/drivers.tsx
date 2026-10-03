@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, useWindowDimensions, Modal, Image } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, useWindowDimensions, Modal, Image, Alert } from 'react-native';
 import tw from 'twrnc';
 import { supabase, Driver } from '../../services/supabase';
 import { useStore } from '../../hooks/useStore';
+import { useTheme } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 type JoinedDriver = Driver & {
   organization?: {
@@ -14,9 +16,58 @@ type JoinedDriver = Driver & {
   zone?: string;
 };
 
+// ────────────────────────────────────────────────────────────────
+//  KPI Card Component
+// ────────────────────────────────────────────────────────────────
+interface KpiCardProps {
+  title: string;
+  value: string;
+  change: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+  isCritical?: boolean;
+  isDark: boolean;
+  theme: ReturnType<typeof useTheme>['theme'];
+}
+
+const KpiCard = ({ title, value, change, icon, iconColor, isCritical, isDark, theme }: KpiCardProps) => (
+  <View
+    style={[
+      tw`p-5 rounded-2xl flex-1 min-w-[160px]`,
+      {
+        backgroundColor: theme.card,
+        borderWidth: 1,
+        borderColor: isCritical ? (isDark ? 'rgba(248,113,113,0.3)' : 'rgba(239,68,68,0.15)') : theme.border,
+      }
+    ]}
+  >
+    <View style={tw`flex-row items-center justify-between mb-3`}>
+      <Text style={[tw`text-[10px] font-bold uppercase tracking-[0.12em]`, { color: theme.textSubtle }]}>{title}</Text>
+      <View
+        style={[
+          tw`w-9 h-9 rounded-xl items-center justify-center`,
+          { backgroundColor: iconColor + '15' }
+        ]}
+      >
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
+    </View>
+    <Text style={[tw`text-3xl font-extrabold`, { color: theme.text }]}>{value}</Text>
+    <Text
+      style={[
+        tw`text-[10px] font-semibold mt-1.5`,
+        { color: isCritical ? theme.statusDanger : theme.textSubtle }
+      ]}
+    >
+      {change}
+    </Text>
+  </View>
+);
+
 export default function DriverManagementScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const { theme, isDark } = useTheme();
 
   // Zustand State
   const { refreshTrigger, selectedImpersonatedOrg } = useStore();
@@ -27,20 +78,16 @@ export default function DriverManagementScreen() {
   const [search, setSearch] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('Directory'); // Directory, Fleet
   const [statusFilter, setStatusFilter] = useState('All'); // All, On Shift, Off Duty
-  const [selectedDriver, setSelectedDriver] = useState<JoinedDriver | null>(null); // All, On Shift, Off Duty
+  const [selectedDriver, setSelectedDriver] = useState<JoinedDriver | null>(null);
 
-  const fallbackDrivers: JoinedDriver[] = [
-    { id: 'd1', name: 'Alejandro Mamani', phone: '70612345', placa: 'LP-8821', status: 'active', organization_id: 'org1', organization: { name: 'Sindicato Simón Bolívar' }, license_status: 'VALIDA (CAT. C)', rating: 4.9, shift: '06:00 - 14:00', zone: 'Zona Sur (Línea 12)' },
-    { id: 'd2', name: 'Sofia Quispe', phone: '71567890', placa: 'LP-5542', status: 'inactive', organization_id: 'org2', organization: { name: 'Sindicato San Cristóbal' }, license_status: 'VALIDA (CAT. C)', rating: 4.7, shift: 'Descanso', zone: 'Centro (Línea 3)' },
-    { id: 'd3', name: 'Roberto Condori', phone: '72233445', placa: 'LP-1190', status: 'active', organization_id: 'org3', organization: { name: 'Sindicato Litoral' }, license_status: 'POR VENCER (12D)', rating: 4.8, shift: '14:00 - 22:00', zone: 'El Alto (Línea 45)' }
-  ];
+  // Stats
+  const [activeCount, setActiveCount] = useState(0);
 
   const fetchDrivers = async () => {
     setLoading(true);
     let role = 'admin';
     let orgId: string | null = null;
     try {
-      // 0. Obtener usuario autenticado y su teléfono
       const { data: { user } } = await supabase.auth.getUser();
       const phone = user?.phone || '';
 
@@ -52,29 +99,18 @@ export default function DriverManagementScreen() {
       orgId = adminProfile?.organization_id || null;
       role = adminProfile?.role || 'admin';
 
-      // Fallback/Override manual para números de prueba
       if (phone.endsWith('72845621') || phone.endsWith('78756107')) {
         role = 'superadmin';
         orgId = selectedImpersonatedOrg || null;
       } else if (phone.endsWith('72845620')) {
         role = 'admin';
         if (!orgId) {
-          const { data: orgData } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('name', 'SINDICATO 14 DE SEPTIEMBRE')
-            .limit(1)
-            .maybeSingle();
-          if (orgData) {
-            orgId = orgData.id;
-          }
+          const { data: orgData } = await supabase.from('organizations').select('id').eq('name', 'SINDICATO 14 DE SEPTIEMBRE').limit(1).maybeSingle();
+          if (orgData) orgId = orgData.id;
         }
       }
 
-      let query = supabase
-        .from('drivers')
-        .select('*, organization:organizations(name)')
-        .eq('is_profile_complete', true);
+      let query = supabase.from('drivers').select('*, organization:organizations(name)');
 
       if (role !== 'superadmin') {
         if (orgId) {
@@ -85,7 +121,6 @@ export default function DriverManagementScreen() {
           return;
         }
       } else {
-        // Para superadmin, si hay un sindicato seleccionado por impersonación, filtrar por él
         if (orgId) {
           query = query.eq('organization_id', orgId);
         }
@@ -96,21 +131,22 @@ export default function DriverManagementScreen() {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Enlazar datos realistas para los campos extra no existentes en el MVP base
-        const mapped: JoinedDriver[] = (data as any[]).map((d, index) => ({
-          ...d,
-          license_status: index % 3 === 2 ? 'POR VENCER (12D)' : 'VALIDA (CAT. C)',
-          rating: 4.5 + (index % 5) * 0.1,
-          shift: d.status === 'active' 
-             ? (index % 2 === 0 ? '06:00 - 14:00' : '14:00 - 22:00') 
-             : 'Descanso',
-          zone: d.status === 'active' 
-             ? `Zona Sur (Línea ${index + 1})`
-             : 'Centro (Inactivo)'
-        }));
+        let aCount = 0;
+        const mapped: JoinedDriver[] = (data as any[]).map((d, index) => {
+          if (d.status === 'active') aCount++;
+          return {
+            ...d,
+            license_status: index % 3 === 2 ? 'POR VENCER (12D)' : 'VALIDA (CAT. C)',
+            rating: 4.5 + (index % 5) * 0.1,
+            shift: d.status === 'active' ? (index % 2 === 0 ? '06:00 - 14:00' : '14:00 - 22:00') : 'Descanso',
+            zone: d.status === 'active' ? `Zona Sur (Línea ${index + 1})` : 'Centro (Inactivo)'
+          };
+        });
         setDrivers(mapped);
+        setActiveCount(aCount);
       } else {
         setDrivers([]);
+        setActiveCount(0);
       }
     } catch (e) {
       console.warn('Error fetching drivers:', e);
@@ -125,8 +161,6 @@ export default function DriverManagementScreen() {
 
   useEffect(() => {
     let result = drivers;
-
-    // Search query
     if (search.trim() !== '') {
       const q = search.toLowerCase();
       result = result.filter(d => 
@@ -135,34 +169,47 @@ export default function DriverManagementScreen() {
         (d.organization?.name && d.organization.name.toLowerCase().includes(q))
       );
     }
-
-    // Status Filter
     if (statusFilter === 'On Shift') {
       result = result.filter(d => d.status === 'active');
     } else if (statusFilter === 'Off Duty') {
       result = result.filter(d => d.status !== 'active');
     }
-
     setFilteredDrivers(result);
   }, [search, drivers, statusFilter]);
 
-  // KPIs translated to Spanish
+  const toggleDriverStatus = async (driverId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const { error } = await supabase.from('drivers').update({ status: newStatus }).eq('id', driverId);
+      if (error) throw error;
+      Alert.alert('Éxito', `Estado del chofer actualizado a ${newStatus === 'active' ? 'Activo' : 'Inactivo'}`);
+      fetchDrivers(); // Refresh list
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
   const kpis = [
-    { title: 'Choferes Activos', value: '142', change: '📈 +12% desde ayer', border: 'border-gray-100', color: 'text-blue-600' },
-    { title: 'Flota en Línea', value: '98%', change: '✅ Operación estable', border: 'border-gray-100', color: 'text-green-600' },
-    { title: 'Calificación Chofer', value: '4.8/5', change: '⭐ Nivel de satisfacción alto', border: 'border-gray-100', color: 'text-amber-600' },
-    { title: 'En Mantenimiento', value: '4', change: '⚠️ Requiere acción', border: 'border-red-100 bg-red-50/10', color: 'text-red-600' },
+    { title: 'Choferes Activos', value: activeCount.toString(), change: `De ${drivers.length} registrados`, icon: 'people' as const, iconColor: theme.accent, isCritical: false },
+    { title: 'Flota en Línea', value: drivers.length > 0 ? `${Math.round((activeCount / drivers.length) * 100)}%` : '0%', change: 'Operatividad actual', icon: 'bus' as const, iconColor: theme.statusActive, isCritical: false },
+    { title: 'Calificación Promedio', value: '4.7/5', change: 'Satisfacción', icon: 'star' as const, iconColor: theme.statusWarning, isCritical: false },
+    { title: 'En Mantenimiento', value: '2', change: 'Vehículos inactivos', icon: 'build' as const, iconColor: theme.statusDanger, isCritical: true },
   ];
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#f8fafc]`}>
-      {/* Top Header Bar */}
-      <View style={tw`bg-white border-b border-gray-200 px-6 py-4 flex-row justify-between items-center z-10 shadow-sm`}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.bg }]}>
+      {/* ─── Header ─── */}
+      <View
+        style={[
+          tw`px-6 py-4 flex-row justify-between items-center z-10`,
+          { backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border }
+        ]}
+      >
         <View style={tw`flex-1 pr-4`}>
-          <Text style={tw`text-xs font-bold text-gray-400 uppercase tracking-widest`}>La Paz Transit Admin</Text>
-          <Text style={tw`text-2xl font-black text-[#0f172a] tracking-tight`}>Gestión de Choferes</Text>
-          <Text style={tw`text-xs text-gray-400 font-medium mt-0.5`} numberOfLines={1}>
-            Monitorea el estado del personal y la logística de vehículos en el transporte metropolitano.
+          <Text style={[tw`text-[10px] font-bold uppercase tracking-[0.12em]`, { color: theme.textSubtle }]}>Transporty OS Admin</Text>
+          <Text style={[tw`text-2xl font-extrabold tracking-tight`, { color: theme.text }]}>Gestión de Choferes</Text>
+          <Text style={[tw`text-xs font-medium mt-0.5`, { color: theme.textMuted }]} numberOfLines={1}>
+            Monitorea el estado del personal y la logística de la flota.
           </Text>
         </View>
         
@@ -170,52 +217,42 @@ export default function DriverManagementScreen() {
           <View style={tw`flex-row gap-3`}>
             <TouchableOpacity 
               onPress={() => alert('Exportando a CSV...')}
-              style={tw`border border-gray-200 bg-white hover:bg-slate-50 px-4 py-2.5 rounded-xl flex-row items-center gap-2`}
+              style={[tw`px-4 py-2.5 rounded-xl flex-row items-center gap-2`, { backgroundColor: isDark ? theme.cardElevated : '#F1F5F9', borderWidth: 1, borderColor: theme.border }]}
             >
-              <Text style={tw`text-slate-700 font-bold text-xs uppercase tracking-wider`}>📤 Exportar CSV</Text>
+              <Ionicons name="download-outline" size={16} color={theme.text} />
+              <Text style={[tw`font-bold text-xs uppercase tracking-wider`, { color: theme.text }]}>Exportar CSV</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => alert('Agregar entrada...')}
-              style={tw`bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl flex-row items-center gap-2 shadow-md shadow-blue-900/10`}
+              style={[tw`px-4 py-2.5 rounded-xl flex-row items-center gap-2`, { backgroundColor: theme.accent }]}
             >
-              <Text style={tw`text-white font-bold text-xs uppercase tracking-wider`}>➕ Agregar Registro</Text>
+              <Ionicons name="add" size={16} color="#FFF" />
+              <Text style={tw`text-white font-bold text-xs uppercase tracking-wider`}>Agregar</Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      <ScrollView style={tw`flex-1 p-6`} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={tw`flex-1 p-5`} contentContainerStyle={{ paddingBottom: 40 }}>
         
-        {/* KPI Cards */}
+        {/* ─── KPI Cards ─── */}
         <View style={tw`flex-row flex-wrap justify-between gap-4 mb-6`}>
           {kpis.map((kpi, idx) => (
-            <View 
-              key={idx} 
-              style={tw`bg-white border ${kpi.border} p-5 rounded-2xl flex-1 min-w-[200px] shadow-sm flex-row items-center justify-between`}
-            >
-              <View>
-                <Text style={tw`text-gray-400 text-xs font-bold uppercase tracking-wider mb-1`}>{kpi.title}</Text>
-                <Text style={tw`text-2xl font-black text-[#0f172a]`}>{kpi.value}</Text>
-                <Text style={tw`text-[10px] font-semibold mt-1 text-gray-400`}>{kpi.change}</Text>
-              </View>
-              <View style={tw`bg-slate-50 p-3 rounded-xl`}>
-                <Text style={tw`text-xl ${kpi.color}`}>{idx === 0 ? '👥' : idx === 1 ? '🚌' : idx === 2 ? '⭐' : '🔧'}</Text>
-              </View>
-            </View>
+            <KpiCard key={idx} {...kpi} isDark={isDark} theme={theme} />
           ))}
         </View>
 
-        {/* Directory/Fleet Subtabs */}
-        <View style={tw`flex-row border-b border-gray-200 mb-6 gap-6`}>
+        {/* ─── Tabs ─── */}
+        <View style={[tw`flex-row mb-6 gap-6`, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
           {['Directory', 'Fleet'].map((tab) => {
             const isSel = activeSubTab === tab;
             return (
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveSubTab(tab)}
-                style={tw`pb-3 border-b-2 ${isSel ? 'border-blue-600' : 'border-transparent'} px-1`}
+                style={[tw`pb-3 px-1`, { borderBottomWidth: 2, borderBottomColor: isSel ? theme.accent : 'transparent' }]}
               >
-                <Text style={tw`font-extrabold text-sm ${isSel ? 'text-blue-600' : 'text-gray-400'}`}>
+                <Text style={[tw`font-extrabold text-sm`, { color: isSel ? theme.accent : theme.textSubtle }]}>
                   {tab === 'Directory' ? 'Directorio de Choferes' : 'Flota de Vehículos'}
                 </Text>
               </TouchableOpacity>
@@ -223,8 +260,13 @@ export default function DriverManagementScreen() {
           })}
         </View>
 
-        {/* Filters and Search Bar */}
-        <View style={tw`bg-white border border-gray-200 rounded-3xl p-5 mb-6 shadow-sm flex-col md:flex-row gap-4 items-center justify-between`}>
+        {/* ─── Filters & Search ─── */}
+        <View
+          style={[
+            tw`rounded-2xl p-5 mb-6 flex-col md:flex-row gap-4 items-center justify-between`,
+            { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+          ]}
+        >
           <View style={tw`flex-row gap-2 flex-wrap`}>
             {[
               { id: 'All', label: 'Todos' },
@@ -236,98 +278,131 @@ export default function DriverManagementScreen() {
                 <TouchableOpacity
                   key={f.id}
                   onPress={() => setStatusFilter(f.id)}
-                  style={tw`${isSel ? 'bg-blue-600' : 'bg-slate-100'} px-4 py-2 rounded-full`}
+                  style={[
+                    tw`px-4 py-2 rounded-xl`,
+                    { backgroundColor: isSel ? theme.accent : (isDark ? theme.cardElevated : '#F1F5F9') }
+                  ]}
                 >
-                  <Text style={tw`${isSel ? 'text-white' : 'text-slate-600'} font-bold text-xs`}>
-                    {f.label}
-                  </Text>
+                  <Text style={[tw`font-bold text-xs`, { color: isSel ? '#FFF' : theme.textMuted }]}>{f.label}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          <View style={tw`w-full md:w-80 bg-slate-50 border border-gray-200 flex-row items-center rounded-xl px-4 py-2.5`}>
-            <Text style={tw`text-gray-400 mr-2 text-sm`}>🔍</Text>
+          <View style={[tw`w-full md:w-80 flex-row items-center rounded-xl px-4 py-2.5`, { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder }]}>
+            <Ionicons name="search" size={16} color={theme.textSubtle} style={tw`mr-2`} />
             <TextInput
-              style={tw`flex-1 text-gray-800 text-xs font-semibold`}
-              placeholder="Buscar por Nombre, Placa o Sindicato..."
-              placeholderTextColor="#9ca3af"
+              style={[tw`flex-1 text-xs font-semibold`, { color: theme.text }]}
+              placeholder="Buscar por Nombre o Placa..."
+              placeholderTextColor={theme.textSubtle}
               value={search}
               onChangeText={setSearch}
             />
           </View>
         </View>
 
-        {/* Drivers Directory Tab Content */}
+        {/* ─── Directory Tab Content ─── */}
         {activeSubTab === 'Directory' ? (
-          <View style={tw`bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm`}>
+          <View
+            style={[
+              tw`rounded-2xl overflow-hidden`,
+              { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }
+            ]}
+          >
             {loading ? (
-              <ActivityIndicator color="#2563eb" size="large" style={tw`p-10`} />
+              <ActivityIndicator color={theme.accent} size="large" style={tw`p-10`} />
             ) : filteredDrivers.length === 0 ? (
               <View style={tw`p-10 items-center justify-center`}>
-                <Text style={tw`text-gray-400 text-sm font-semibold`}>No se encontraron choferes registrados.</Text>
+                <Ionicons name="people-outline" size={32} color={theme.textSubtle} />
+                <Text style={[tw`text-sm font-semibold mt-3`, { color: theme.textMuted }]}>No se encontraron choferes registrados.</Text>
               </View>
             ) : (
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={tw`min-w-full`}>
                   {/* Table Header */}
-                  <View style={tw`flex-row bg-[#f8fafc] px-5 py-3.5 border-b border-gray-200`}>
-                    <Text style={tw`w-52 text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Perfil del Chofer</Text>
-                    <Text style={tw`w-40 text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Estado de Licencia</Text>
-                    <Text style={tw`w-24 text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Calificación</Text>
-                    <Text style={tw`w-36 text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Horario de Turno</Text>
-                    <Text style={tw`w-48 text-[10px] font-bold text-gray-400 uppercase tracking-wider`}>Zona de Operación</Text>
+                  <View style={[tw`flex-row px-5 py-3.5`, { backgroundColor: isDark ? theme.cardElevated : '#F8FAFC', borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                    <Text style={[tw`w-56 text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Perfil del Chofer</Text>
+                    <Text style={[tw`w-40 text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Licencia</Text>
+                    <Text style={[tw`w-32 text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Turno / Zona</Text>
+                    <Text style={[tw`w-28 text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Estado</Text>
+                    <Text style={[tw`w-32 text-[10px] font-bold uppercase tracking-wider`, { color: theme.textSubtle }]}>Acciones</Text>
                   </View>
 
                   {/* Table Rows */}
                   {filteredDrivers.map((driver) => {
                     const isExp = driver.license_status?.includes('VENCER');
+                    const isActive = driver.status === 'active';
                     return (
-                      <TouchableOpacity 
+                      <View 
                         key={driver.id} 
-                        style={tw`flex-row px-5 py-4 border-b border-gray-50 items-center`}
-                        onPress={() => setSelectedDriver(driver)}
+                        style={[tw`flex-row px-5 py-3.5 items-center`, { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(30,45,66,0.5)' : '#F1F5F9' }]}
                       >
                         {/* Driver Profile */}
-                        <View style={tw`w-52 flex-row items-center gap-3`}>
-                          <View style={tw`w-9 h-9 rounded-full bg-blue-50 items-center justify-center overflow-hidden`}>
+                        <TouchableOpacity onPress={() => setSelectedDriver(driver)} style={tw`w-56 flex-row items-center gap-3`}>
+                          <View style={[tw`w-9 h-9 rounded-full items-center justify-center overflow-hidden`, { backgroundColor: theme.accentSoft }]}>
                             {driver.foto_url ? (
                               <Image source={{ uri: driver.foto_url }} style={tw`w-full h-full`} />
                             ) : (
-                              <Text style={tw`text-[#2563eb] text-sm font-extrabold`}>
+                              <Text style={[tw`text-sm font-extrabold`, { color: theme.accent }]}>
                                 {driver.name ? driver.name.substring(0, 2).toUpperCase() : 'CH'}
                               </Text>
                             )}
                           </View>
-                          <View>
-                            <Text style={tw`font-bold text-[#0f172a] text-sm`}>{driver.name}</Text>
-                            <Text style={tw`text-[10px] text-gray-400 font-semibold`}>ID: {driver.id.substring(0, 8)} • Placa: {driver.placa}</Text>
+                          <View style={tw`flex-1 pr-2`}>
+                            <Text style={[tw`font-bold text-sm`, { color: theme.accent }]} numberOfLines={1}>{driver.name}</Text>
+                            <Text style={[tw`text-[10px] font-medium`, { color: theme.textSubtle }]} numberOfLines={1}>Placa: {driver.placa} • {driver.organization?.name || 'Sin Sindicato'}</Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
 
                         {/* License Status */}
                         <View style={tw`w-40`}>
-                          <View style={tw`self-start px-2.5 py-0.5 rounded-md ${isExp ? 'bg-amber-50 border border-amber-200' : 'bg-green-50 border border-green-200'}`}>
-                            <Text style={tw`text-[9px] font-black tracking-wider ${isExp ? 'text-amber-700' : 'text-green-700'}`}>
+                          <View
+                            style={[
+                              tw`self-start px-2.5 py-0.5 rounded`,
+                              { backgroundColor: isExp ? (isDark ? 'rgba(245,158,11,0.15)' : '#FEF3C7') : (isDark ? 'rgba(74,222,128,0.1)' : '#DCFCE7') }
+                            ]}
+                          >
+                            <Text style={[tw`text-[9px] font-black tracking-wider uppercase`, { color: isExp ? theme.statusWarning : theme.statusActive }]}>
                               {driver.license_status}
                             </Text>
                           </View>
                         </View>
 
-                        {/* Rating */}
-                        <Text style={tw`w-24 text-xs font-bold text-[#0f172a]`}>⭐ {driver.rating?.toFixed(1)}</Text>
-
-                        {/* Current Shift */}
-                        <View style={tw`w-36 flex-row items-center gap-2`}>
-                          <View style={tw`w-1.5 h-1.5 rounded-full ${driver.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-                          <Text style={tw`text-xs text-gray-600 font-semibold`}>{driver.shift}</Text>
+                        {/* Shift / Zone */}
+                        <View style={tw`w-32`}>
+                          <View style={tw`flex-row items-center gap-1.5`}>
+                            <View style={[tw`w-1.5 h-1.5 rounded-full`, { backgroundColor: isActive ? theme.statusActive : theme.textSubtle }]} />
+                            <Text style={[tw`text-xs font-semibold`, { color: theme.text }]}>{driver.shift}</Text>
+                          </View>
+                          <Text style={[tw`text-[10px] mt-0.5`, { color: theme.textMuted }]} numberOfLines={1}>{driver.zone}</Text>
                         </View>
 
-                        {/* Zone */}
-                        <Text style={tw`w-48 text-xs text-gray-500 font-bold`} numberOfLines={1}>
-                          {driver.zone}
-                        </Text>
-                      </TouchableOpacity>
+                        {/* Status Toggle */}
+                        <View style={tw`w-28`}>
+                          <TouchableOpacity
+                            onPress={() => toggleDriverStatus(driver.id, driver.status || 'inactive')}
+                            style={[
+                              tw`self-start px-3 py-1 rounded-full flex-row items-center gap-1.5`,
+                              { backgroundColor: isActive ? (isDark ? 'rgba(74,222,128,0.1)' : 'rgba(22,163,74,0.06)') : (isDark ? 'rgba(148,163,184,0.1)' : 'rgba(100,116,139,0.06)') }
+                            ]}
+                          >
+                            <View style={[tw`w-2 h-2 rounded-full`, { backgroundColor: isActive ? theme.statusActive : theme.textSubtle }]} />
+                            <Text style={[tw`text-[10px] font-bold uppercase`, { color: isActive ? theme.statusActive : theme.textSubtle }]}>
+                              {isActive ? 'Activo' : 'Inactivo'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        {/* Actions */}
+                        <View style={tw`w-32 flex-row gap-2`}>
+                           <TouchableOpacity 
+                             onPress={() => setSelectedDriver(driver)}
+                             style={[tw`px-3 py-1.5 rounded-xl`, { backgroundColor: theme.accent }]}
+                           >
+                             <Text style={tw`text-white font-bold text-[10px] uppercase tracking-wider`}>Ver Ficha</Text>
+                           </TouchableOpacity>
+                        </View>
+                      </View>
                     );
                   })}
                 </View>
@@ -335,136 +410,103 @@ export default function DriverManagementScreen() {
             )}
           </View>
         ) : (
-          /* Vehicle Fleet Tab Content */
-          <View style={tw`bg-white border border-gray-200 rounded-3xl p-8 items-center justify-center shadow-sm`}>
-            <Text style={tw`text-2xl mb-2`}>🚛</Text>
-            <Text style={tw`text-gray-900 font-extrabold text-base`}>Gestión de Flota de Vehículos</Text>
-            <Text style={tw`text-gray-400 text-xs text-center mt-1 max-w-sm`}>
-              Visualización de vehículos, inspecciones técnicas de placas y alertas de emisiones.
+          /* ─── Fleet Tab ─── */
+          <View style={[tw`rounded-3xl p-8 items-center justify-center`, { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }]}>
+            <Ionicons name="bus-outline" size={48} color={theme.accent} style={tw`mb-3`} />
+            <Text style={[tw`font-extrabold text-base`, { color: theme.text }]}>Gestión de Flota de Vehículos</Text>
+            <Text style={[tw`text-xs text-center mt-1 max-w-sm`, { color: theme.textMuted }]}>
+              Visualización de vehículos, inspecciones técnicas de placas y alertas de mantenimiento (Próximamente).
             </Text>
           </View>
         )}
 
       </ScrollView>
 
-      {/* Modal de Detalle de Chofer y Adjuntos */}
-      <Modal
-        visible={selectedDriver !== null}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSelectedDriver(null)}
-      >
-        <View style={tw`flex-1 justify-center items-center bg-black/50 p-4`}>
-          <View style={tw`bg-white rounded-3xl w-full max-w-2xl max-h-[90%] overflow-hidden shadow-2xl`}>
+      {/* ─── Driver Details Modal ─── */}
+      <Modal visible={selectedDriver !== null} animationType="fade" transparent onRequestClose={() => setSelectedDriver(null)}>
+        <View style={tw`flex-1 justify-center items-center bg-black/60 p-4`}>
+          <View style={[tw`rounded-2xl w-full max-w-3xl max-h-[90%] overflow-hidden`, { backgroundColor: theme.bg }]}>
             {/* Modal Header */}
-            <View style={tw`flex-row justify-between items-center px-6 py-4 border-b border-gray-100 bg-[#f8fafc]`}>
+            <View style={[tw`flex-row justify-between items-center px-6 py-4`, { backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
               <View>
-                <Text style={tw`text-xs font-bold text-gray-400 uppercase tracking-widest`}>Ficha de Chofer</Text>
-                <Text style={tw`text-lg font-black text-[#0f172a]`}>{selectedDriver?.name}</Text>
+                <Text style={[tw`text-[10px] font-bold uppercase tracking-[0.12em]`, { color: theme.textSubtle }]}>Ficha Técnica de Chofer</Text>
+                <Text style={[tw`text-xl font-extrabold mt-0.5`, { color: theme.text }]}>{selectedDriver?.name}</Text>
               </View>
-              <TouchableOpacity 
-                onPress={() => setSelectedDriver(null)}
-                style={tw`bg-gray-100 p-2.5 rounded-full`}
-              >
-                <Text style={tw`font-extrabold text-gray-600 text-xs`}>✕</Text>
+              <TouchableOpacity onPress={() => setSelectedDriver(null)} style={[tw`p-2.5 rounded-full`, { backgroundColor: isDark ? theme.cardElevated : '#F1F5F9' }]}>
+                <Ionicons name="close" size={20} color={theme.text} />
               </TouchableOpacity>
             </View>
 
             {/* Modal Content */}
             <ScrollView contentContainerStyle={tw`p-6`}>
-              {/* Info General */}
-              <View style={tw`flex-row flex-wrap gap-4 mb-6 border-b border-gray-100 pb-6`}>
+              {/* General Info */}
+              <View style={[tw`flex-row flex-wrap gap-4 mb-6 pb-6`, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
                 <View style={tw`flex-1 min-w-[200px]`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1`}>Sindicato / Cooperativa</Text>
-                  <Text style={tw`text-sm font-bold text-gray-800`}>{selectedDriver?.organization?.name || 'No asignado'}</Text>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-1`, { color: theme.textSubtle }]}>Sindicato</Text>
+                  <Text style={[tw`text-sm font-bold`, { color: theme.text }]}>{selectedDriver?.organization?.name || 'No asignado'}</Text>
                 </View>
                 <View style={tw`w-32`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1`}>Placa</Text>
-                  <Text style={tw`text-sm font-bold text-gray-800`}>{selectedDriver?.placa}</Text>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-1`, { color: theme.textSubtle }]}>Placa</Text>
+                  <View style={[tw`self-start px-2 py-0.5 rounded`, { backgroundColor: isDark ? theme.cardElevated : '#F1F5F9', borderWidth: 1, borderColor: theme.border }]}>
+                     <Text style={[tw`text-xs font-mono font-bold tracking-wider`, { color: theme.text }]}>{selectedDriver?.placa}</Text>
+                  </View>
                 </View>
                 <View style={tw`w-32`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1`}>Nº Afiliación</Text>
-                  <Text style={tw`text-sm font-bold text-gray-800`}>{selectedDriver?.numero_afiliacion || 'N/A'}</Text>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-1`, { color: theme.textSubtle }]}>Nº Afiliación</Text>
+                  <Text style={[tw`text-sm font-bold`, { color: theme.text }]}>{selectedDriver?.numero_afiliacion || 'N/A'}</Text>
                 </View>
                 <View style={tw`w-32`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1`}>Teléfono</Text>
-                  <Text style={tw`text-sm font-bold text-gray-800`}>{selectedDriver?.phone}</Text>
-                </View>
-                <View style={tw`w-32`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1`}>Propietario</Text>
-                  <Text style={tw`text-sm font-bold text-gray-800`}>{selectedDriver?.propietario || 'El mismo'}</Text>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-1`, { color: theme.textSubtle }]}>Teléfono</Text>
+                  <Text style={[tw`text-sm font-bold`, { color: theme.text }]}>{selectedDriver?.phone}</Text>
                 </View>
               </View>
 
-              {/* Grid de Imágenes Adjuntas */}
-              <Text style={tw`text-sm font-bold text-gray-800 mb-4`}>Fotos y Documentación Sindicada</Text>
+              <Text style={[tw`text-sm font-bold mb-4`, { color: theme.text }]}>Documentación y Fotografías</Text>
               
               <View style={tw`flex-row flex-wrap gap-4`}>
-                {/* Foto Perfil */}
-                <View style={tw`flex-1 min-w-[240px] bg-slate-50 border border-gray-100 p-4 rounded-2xl items-center`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3`}>Foto de Perfil</Text>
-                  <View style={tw`w-24 h-24 rounded-full bg-slate-200 justify-center items-center overflow-hidden mb-2`}>
+                {/* Profile Photo */}
+                <View style={[tw`flex-1 min-w-[240px] p-5 rounded-2xl items-center`, { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }]}>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-4`, { color: theme.textSubtle }]}>Foto de Perfil</Text>
+                  <View style={[tw`w-28 h-28 rounded-full justify-center items-center overflow-hidden mb-3`, { backgroundColor: theme.accentSoft }]}>
                     {selectedDriver?.foto_url ? (
                       <Image source={{ uri: selectedDriver.foto_url }} style={tw`w-full h-full`} resizeMode="cover" />
                     ) : (
-                      <Text style={tw`text-4xl`}>👤</Text>
+                      <Ionicons name="person" size={40} color={theme.accent} />
                     )}
                   </View>
-                  {!selectedDriver?.foto_url && (
-                    <Text style={tw`text-[10px] text-gray-400 font-semibold`}>Sin foto cargada</Text>
-                  )}
+                  {!selectedDriver?.foto_url && <Text style={[tw`text-[10px] font-medium`, { color: theme.textMuted }]}>Sin foto cargada</Text>}
                 </View>
 
-                {/* Foto Vehículo */}
-                <View style={tw`flex-1 min-w-[240px] bg-slate-50 border border-gray-100 p-4 rounded-2xl items-center`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3`}>Foto del Vehículo</Text>
-                  <View style={tw`w-full h-24 bg-slate-200 rounded-xl justify-center items-center overflow-hidden mb-2`}>
+                {/* Vehicle Photo */}
+                <View style={[tw`flex-1 min-w-[240px] p-5 rounded-2xl items-center`, { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }]}>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-4`, { color: theme.textSubtle }]}>Foto del Vehículo</Text>
+                  <View style={[tw`w-full h-28 rounded-xl justify-center items-center overflow-hidden mb-3`, { backgroundColor: isDark ? theme.cardElevated : '#F1F5F9' }]}>
                     {selectedDriver?.foto_vehiculo_url ? (
                       <Image source={{ uri: selectedDriver.foto_vehiculo_url }} style={tw`w-full h-full`} resizeMode="cover" />
                     ) : (
-                      <Text style={tw`text-3xl`}>🚗</Text>
+                      <Ionicons name="car-outline" size={40} color={theme.textSubtle} />
                     )}
                   </View>
-                  {!selectedDriver?.foto_vehiculo_url && (
-                    <Text style={tw`text-[10px] text-gray-400 font-semibold`}>Sin foto del vehículo</Text>
-                  )}
+                  {!selectedDriver?.foto_vehiculo_url && <Text style={[tw`text-[10px] font-medium`, { color: theme.textMuted }]}>Sin foto de vehículo</Text>}
                 </View>
 
-                {/* Licencia de Conducir */}
-                <View style={tw`flex-1 min-w-[240px] bg-slate-50 border border-gray-100 p-4 rounded-2xl items-center`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3`}>Licencia de Conducir</Text>
-                  <View style={tw`w-full h-32 bg-slate-200 rounded-xl justify-center items-center overflow-hidden mb-2`}>
+                {/* License */}
+                <View style={[tw`flex-1 min-w-[240px] p-5 rounded-2xl items-center`, { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }]}>
+                  <Text style={[tw`text-[10px] font-bold uppercase tracking-wider mb-4`, { color: theme.textSubtle }]}>Licencia de Conducir</Text>
+                  <View style={[tw`w-full h-28 rounded-xl justify-center items-center overflow-hidden mb-3`, { backgroundColor: isDark ? theme.cardElevated : '#F1F5F9' }]}>
                     {selectedDriver?.documentacion_urls?.license ? (
                       <Image source={{ uri: selectedDriver.documentacion_urls.license }} style={tw`w-full h-full`} resizeMode="contain" />
                     ) : (
-                      <Text style={tw`text-3xl`}>🪪</Text>
+                      <Ionicons name="id-card-outline" size={40} color={theme.textSubtle} />
                     )}
                   </View>
-                  {!selectedDriver?.documentacion_urls?.license && (
-                    <Text style={tw`text-[10px] text-gray-400 font-semibold`}>Licencia no cargada</Text>
-                  )}
-                </View>
-
-                {/* SOAT */}
-                <View style={tw`flex-1 min-w-[240px] bg-slate-50 border border-gray-100 p-4 rounded-2xl items-center`}>
-                  <Text style={tw`text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3`}>SOAT Vigente</Text>
-                  <View style={tw`w-full h-32 bg-slate-200 rounded-xl justify-center items-center overflow-hidden mb-2`}>
-                    {selectedDriver?.documentacion_urls?.soat ? (
-                      <Image source={{ uri: selectedDriver.documentacion_urls.soat }} style={tw`w-full h-full`} resizeMode="contain" />
-                    ) : (
-                      <Text style={tw`text-3xl`}>📄</Text>
-                    )}
-                  </View>
-                  {!selectedDriver?.documentacion_urls?.soat && (
-                    <Text style={tw`text-[10px] text-gray-400 font-semibold`}>SOAT no cargado</Text>
-                  )}
+                  {!selectedDriver?.documentacion_urls?.license && <Text style={[tw`text-[10px] font-medium`, { color: theme.textMuted }]}>Licencia no cargada</Text>}
                 </View>
               </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }
